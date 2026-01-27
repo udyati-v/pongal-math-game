@@ -61,7 +61,7 @@ input {
 <!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
   <h2 id="questionText"></h2>
-  <input id="answerInput" placeholder="Type answer"/>
+  <input id="answerInput" placeholder="Type answer (A/B/C or value)"/>
   <br><br>
   <button onclick="submitAnswer()">Harvest!</button>
   <p>⏱ Time Left: <span id="time">60</span>s</p>
@@ -89,29 +89,32 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* QUESTIONS — WORDINGS UNCHANGED */
+/* 🔒 ALL COMPULSORY QUESTIONS (EXACT WORDING) */
 const compulsory = [
   {
-    q: "What does Sankranti signify astronomically?\nA) Full moon day\nB) Sun’s transition into Capricorn (Makara Rashi)\nC) Start of winter\nD) Spring equinox",
+    q: "1) Total Harvest 750KG\nRice = 40%\nHow much kg Rice harvested\na-300kg\nb-250kg\nc-350",
+    a: ["a","300","300kg"]
+  },
+  {
+    q: "2) Field Harvest Rate = 120kg/hr\nHow long to harvest 360kg?\na-2.5hr\nb-3hr\nc-3.5hr",
+    a: ["b","3","3hr","3hrs"]
+  },
+  {
+    q: "3) What % of pulses harvested? (Check invite)\na-10%\nb-40%\nc-20%",
+    a: ["a","10","10%"]
+  },
+  {
+    q: "4) Who are the men taming bull, per the invite ?\na) Pythagoras, Carl Friedrich Gauss\nb) Euler, Archimedes\nc) Aryabhata, Srinivasa Ramanujan",
+    a: ["c","aryabhata","srinivasa ramanujan","ramanujan"]
+  },
+  {
+    q: "4) What does Sankranti signify astronomically?\nA) Full moon day\nB) Sun’s transition into Capricorn (Makara Rashi)\nC) Start of winter\nD) Spring equinox",
     a: ["b","sun’s transition into capricorn","makara rashi"]
   },
   {
-    q: "Why are kites flown during Sankranti?\nA) For entertainment only\nB) To welcome the sun’s northward journey (Uttarayan)\nC) To mark the monsoon season\nD) To scare birds away",
+    q: "5) Why are kites flown during Sankranti?\nA) For entertainment only\nB) To welcome the sun’s northward journey (Uttarayan)\nC) To mark the monsoon season\nD) To scare birds away",
     a: ["b","uttarayan","northward journey"]
   }
-];
-
-const pool = [
-  {
-    q: "What is Sankranti called in Tamil Nadu?\nA) Lohri\nB) Magh Bihu\nC) Pongal\nD) Uttarayan",
-    a: ["c","pongal"]
-  },
-  {
-    q: "In Assam, Sankranti is known as:\nA) Bhogi\nB) Onam\nC) Magh Bihu\nD) Vishu",
-    a: ["c","magh bihu"]
-  },
-  { q: "Evaluate log(100) − log(10)", a: ["1"] },
-  { q: "If f(x)=x²−1, find f(5)", a: ["24"] }
 ];
 
 let questions = [];
@@ -132,7 +135,7 @@ async function startGame() {
     return;
   }
 
-  questions = [...compulsory, ...shuffle(pool)];
+  questions = compulsory;
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
   loadQuestion();
@@ -189,11 +192,6 @@ async function showLeaderboard() {
     let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "";
     list.innerHTML += `<li>${medal} ${doc.data().name} — ${doc.data().score}</li>`;
   });
-}
-
-/* SHUFFLE */
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
 }
 </script>
 
