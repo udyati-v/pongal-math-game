@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pongal Math Harvest</title>
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
 body {
   margin: 0;
@@ -28,14 +32,14 @@ body {
 h1 { color: #8e3b1f; }
 
 .question {
-  font-size: 17px;
+  font-size: 16px;
   margin: 14px 0;
   white-space: pre-line;
 }
 
 input {
   padding: 8px;
-  width: 170px;
+  width: 180px;
   font-size: 16px;
   text-align: center;
 }
@@ -93,20 +97,30 @@ button {
 
   <!-- LEADERBOARD -->
   <div id="leaderboardBox" class="hidden">
-    <b>🏆 Leaderboard</b>
+    <b>🏆 Global Top 10 Leaderboard</b>
     <ol id="leaderboardList"></ol>
   </div>
 </div>
 
 <script>
-/* GAME SETTINGS */
+/* 🔥 FIREBASE CONFIG (YOUR REAL CONFIG) */
+const firebaseConfig = {
+  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
+  authDomain: "pongal-math-game.firebaseapp.com",
+  projectId: "pongal-math-game",
+  storageBucket: "pongal-math-game.firebasestorage.app",
+  messagingSenderId: "656858683321",
+  appId: "1:656858683321:web:dc3f28c9c92e3394778868"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* GAME VARIABLES */
 let score = 0;
 let timeLeft = 60; // 1 minute
 let timer;
 let playerName = "Guest";
-
-let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-
 let currentIndex = 0;
 let questions = [];
 let correctAnswers = [];
@@ -131,28 +145,23 @@ const compulsory = [
   }
 ];
 
-/* NON-REPEATING MENTAL MATH BANK */
+/* LARGE NON-REPEATING QUESTION BANK */
 const mentalMathBank = [
   { q: "Evaluate log(100) − log(10)", a: ["1"] },
   { q: "Evaluate log(1000) − log(10)", a: ["2"] },
-  { q: "Evaluate log(10000) − log(100)", a: ["2"] },
+  { q: "25% of 240", a: ["60"] },
+  { q: "√196", a: ["14"] },
+  { q: "99²", a: ["9801"] },
   { q: "Divide 80 in the ratio 3:5. Find larger part.", a: ["50"] },
-  { q: "Divide 72 in the ratio 5:7. Find smaller part.", a: ["30"] },
   { q: "If f(x)=2x+3, find f(6)", a: ["15"] },
   { q: "If f(x)=x²−1, find f(5)", a: ["24"] },
   { q: "For y=4(x−1)², state vertical stretch factor", a: ["4"] },
-  { q: "For y=(x+2)²−3, state vertical shift", a: ["-3"] },
-  { q: "25% of 240", a: ["60"] },
-  { q: "40% of 350", a: ["140"] },
-  { q: "Increase 200 by 15%", a: ["230"] },
-  { q: "Mean of 4, 6, 10, 12", a: ["8"] },
-  { q: "2³ × 2²", a: ["32"] },
-  { q: "√196", a: ["14"] },
-  { q: "99²", a: ["9801"] },
-  { q: "Pongal: 6 pots serve 24 people. 10 pots serve?", a: ["40"] }
+  { q: "Pongal: 6 pots serve 24 people. 10 pots serve?", a: ["40"] },
+  { q: "Evaluate log(10000) − log(100)", a: ["2"] },
+  { q: "If f(x)=3x−7, find f(10)", a: ["23"] }
 ];
 
-/* SHUFFLE FUNCTION */
+/* SHUFFLE */
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -213,19 +222,29 @@ function checkAnswer() {
   showQuestion();
 }
 
-function endGame() {
+/* 🌍 GLOBAL TOP-10 LEADERBOARD */
+async function endGame() {
   clearInterval(timer);
 
-  leaderboard.push({ name: playerName, score });
-  leaderboard.sort((a,b) => b.score - a.score);
-  leaderboard = leaderboard.slice(0,5);
-  localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+  await db.collection("scores").add({
+    name: playerName,
+    score: score,
+    time: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  const snapshot = await db
+    .collection("scores")
+    .orderBy("score", "desc")
+    .limit(10)
+    .get();
 
   const list = document.getElementById("leaderboardList");
   list.innerHTML = "";
-  leaderboard.forEach(p => {
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
     const li = document.createElement("li");
-    li.innerText = `${p.name}: ${p.score}`;
+    li.innerText = `${data.name}: ${data.score}`;
     list.appendChild(li);
   });
 
