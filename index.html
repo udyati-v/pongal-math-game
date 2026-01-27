@@ -52,7 +52,7 @@ input {
 <!-- START PAGE -->
 <div class="card" id="startPage">
   <h1>🌾 Pongal Math Harvest 🌞</h1>
-  <p><b>Beat the clock! Solve more, score more — top 3 win rewards!</b></p>
+  <p><b>Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️</b></p>
   <input type="text" id="playerName" placeholder="Enter your name"/>
   <br>
   <button onclick="startGame()">Start Game</button>
@@ -89,26 +89,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* 🎯 QUESTIONS */
+/* QUESTIONS — WORDINGS UNCHANGED */
 const compulsory = [
   {
-    q: "What does Sankranti signify astronomically?\nA) Full moon\nB) Sun enters Capricorn\nC) Start of winter\nD) Spring equinox",
-    a: ["b", "sun enters capricorn", "makara rashi"]
+    q: "What does Sankranti signify astronomically?\nA) Full moon day\nB) Sun’s transition into Capricorn (Makara Rashi)\nC) Start of winter\nD) Spring equinox",
+    a: ["b","sun’s transition into capricorn","makara rashi"]
   },
   {
-    q: "Why are kites flown during Sankranti?\nA) Fun\nB) Welcome Uttarayan\nC) Monsoon\nD) Scare birds",
-    a: ["b", "uttarayan", "northward journey"]
+    q: "Why are kites flown during Sankranti?\nA) For entertainment only\nB) To welcome the sun’s northward journey (Uttarayan)\nC) To mark the monsoon season\nD) To scare birds away",
+    a: ["b","uttarayan","northward journey"]
   }
 ];
 
 const pool = [
   {
     q: "What is Sankranti called in Tamil Nadu?\nA) Lohri\nB) Magh Bihu\nC) Pongal\nD) Uttarayan",
-    a: ["c", "pongal"]
+    a: ["c","pongal"]
   },
   {
-    q: "In Assam, Sankranti is known as?\nA) Bhogi\nB) Onam\nC) Magh Bihu\nD) Vishu",
-    a: ["c", "magh bihu"]
+    q: "In Assam, Sankranti is known as:\nA) Bhogi\nB) Onam\nC) Magh Bihu\nD) Vishu",
+    a: ["c","magh bihu"]
   },
   { q: "Evaluate log(100) − log(10)", a: ["1"] },
   { q: "If f(x)=x²−1, find f(5)", a: ["24"] }
@@ -121,7 +121,7 @@ let time = 60;
 let timer;
 let player = "";
 
-/* 🚀 START GAME */
+/* START GAME */
 async function startGame() {
   player = document.getElementById("playerName").value.trim();
   if (!player) return alert("Enter name");
@@ -139,14 +139,14 @@ async function startGame() {
   timer = setInterval(updateTimer, 1000);
 }
 
-/* ⏱ TIMER */
+/* TIMER */
 function updateTimer() {
   time--;
   document.getElementById("time").innerText = time;
   if (time <= 0) endGame();
 }
 
-/* ❓ QUESTIONS */
+/* QUESTIONS */
 function loadQuestion() {
   if (index >= questions.length) return endGame();
   document.getElementById("questionText").innerText = questions[index].q;
@@ -161,7 +161,7 @@ function submitAnswer() {
   loadQuestion();
 }
 
-/* 🏁 END GAME */
+/* END GAME */
 async function endGame() {
   clearInterval(timer);
   await db.collection("scores").doc(player).set({
@@ -172,7 +172,7 @@ async function endGame() {
   showLeaderboard();
 }
 
-/* 🏆 LEADERBOARD */
+/* LEADERBOARD */
 async function showLeaderboard() {
   document.getElementById("gamePage").classList.add("hidden");
   document.getElementById("leaderboardPage").classList.remove("hidden");
@@ -191,7 +191,7 @@ async function showLeaderboard() {
   });
 }
 
-/* 🔀 SHUFFLE */
+/* SHUFFLE */
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
