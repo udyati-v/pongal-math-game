@@ -2,71 +2,139 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pongal Math Harvest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
+/* ---------- GLOBAL ---------- */
 body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(#f6d365, #fda085);
   margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(#ffd54f, #ffb74d);
+  overflow-x: hidden;
+}
+
+/* ---------- ANIMATED BACKGROUND ---------- */
+.sun {
+  position: fixed;
+  top: 40px;
+  right: 40px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #fff176, #fbc02d);
+  border-radius: 50%;
+  animation: pulse 4s infinite;
+  z-index: -1;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.kite {
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  background: red;
+  transform: rotate(45deg);
+  animation: fly 12s linear infinite;
+  z-index: -1;
+}
+
+.kite::after {
+  content: "";
+  position: absolute;
+  width: 2px;
+  height: 80px;
+  background: #444;
+  top: 50px;
+  left: 25px;
+}
+
+@keyframes fly {
+  from { left: -60px; top: 60%; }
+  to { left: 110%; top: 10%; }
+}
+
+/* ---------- CARD ---------- */
+.card {
+  max-width: 650px;
+  margin: 60px auto;
+  background: #fff8e1;
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
   text-align: center;
 }
-.card {
-  background: #fff7e6;
-  margin: 40px auto;
-  padding: 20px;
-  border-radius: 18px;
-  width: 90%;
-  max-width: 430px;
+
+h1 {
+  color: #6d4c41;
 }
-.hidden { display: none; }
-button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  background: #28c76f;
-  color: white;
+
+input, button {
+  padding: 12px;
   font-size: 16px;
+  margin-top: 12px;
+  width: 90%;
+}
+
+button {
+  background: #43a047;
+  color: white;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
 }
-input {
-  padding: 10px;
-  width: 80%;
-  margin: 10px;
+
+button:disabled {
+  background: #9e9e9e;
 }
-.leaderboard li {
+
+.hidden {
+  display: none;
+}
+
+/* ---------- LEADERBOARD ---------- */
+.leaderboard {
+  margin-top: 20px;
   text-align: left;
+}
+
+.leaderboard li {
+  font-size: 18px;
   margin: 6px 0;
 }
-pre {
-  white-space: pre-wrap;
-  text-align: left;
-}
+
+.gold { color: gold; }
+.silver { color: silver; }
+.bronze { color: #cd7f32; }
 </style>
 </head>
 
 <body>
 
+<div class="sun"></div>
+<div class="kite"></div>
+
 <!-- START PAGE -->
 <div class="card" id="startPage">
-  <h1>🌾 Pongal Math Harvest 🌞</h1>
+  <h1>🌾 Pongal Math Harvest ☀️</h1>
   <p><b>Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️</b></p>
-  <input type="text" id="playerName" placeholder="Enter your name">
-  <br>
+  <input id="playerName" placeholder="Enter your name">
   <button onclick="startGame()">Start Game</button>
 </div>
 
 <!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
-  <h3 id="questionNumber"></h3>
-  <pre id="questionText"></pre>
-  <input id="answerInput" placeholder="Type a / b / c / value">
-  <br>
+  <h2 id="qCounter"></h2>
+  <p id="questionText"></p>
+  <input id="answerInput" placeholder="Type answer">
   <button onclick="submitAnswer()">Submit</button>
   <p>⏱ Time Left: <span id="time">60</span>s</p>
   <p>⭐ Score: <span id="score">0</span></p>
@@ -74,215 +142,163 @@ pre {
 
 <!-- LEADERBOARD PAGE -->
 <div class="card hidden" id="leaderboardPage">
-  <h2>🏆 Global Leaderboard</h2>
-  <ol class="leaderboard" id="leaderboardList"></ol>
+  <h2>🏆 Global Leaderboard (Top 10)</h2>
+  <ol id="leaderboardList" class="leaderboard"></ol>
 </div>
 
 <script>
-/* 🔥 Firebase Config */
-const firebaseConfig = {
+/* ---------- FIREBASE ---------- */
+firebase.initializeApp({
   apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
   authDomain: "pongal-math-game.firebaseapp.com",
-  projectId: "pongal-math-game",
-  storageBucket: "pongal-math-game.firebasestorage.app",
-  messagingSenderId: "656858683321",
-  appId: "1:656858683321:web:dc3f28c9c92e3394778868"
-};
-firebase.initializeApp(firebaseConfig);
+  projectId: "pongal-math-game"
+});
 const db = firebase.firestore();
 
-/* 🔒 COMPULSORY QUESTIONS (Q1–Q6) */
+/* ---------- GAME STATE ---------- */
+let questions = [];
+let index = 0;
+let score = 0;
+let timer;
+let timeLeft = 60;
+let player = "";
+
+/* ---------- QUESTIONS ---------- */
 const compulsory = [
-  {
-    text:
-`Question 1
+{
+q:`Question 1
 Total Harvest = 750 kg
 Rice constitutes 40% of the total harvest.
 How many kilograms of rice were harvested?
-
 a) 300 kg
 b) 250 kg
 c) 350 kg`,
-    answers: ["a","300","300 kg"]
-  },
-  {
-    text:
-`Question 2
+a:["a","300","300 kg"]
+},
+{
+q:`Question 2
 The field harvest rate is 120 kg per hour.
 How long will it take to harvest 360 kg?
-
 a) 2.5 hours
 b) 3 hours
 c) 3.5 hours`,
-    answers: ["b","3","3 hours","3hrs"]
-  },
-  {
-    text:
-`Question 3
+a:["b","3","3 hours"]
+},
+{
+q:`Question 3
 What percentage of pulses are harvested?
 (Refer to the invite)
-
 a) 10%
 b) 40%
 c) 20%`,
-    answers: ["a","10","10%"]
-  },
-  {
-    text:
-`Question 4
+a:["a","10","10%"]
+},
+{
+q:`Question 4
 Who are the mathematicians shown taming the bull in the invite?
-
 a) Pythagoras and Carl Friedrich Gauss
 b) Euler and Archimedes
 c) Aryabhata and Srinivasa Ramanujan`,
-    answers: ["c","aryabhata","ramanujan","srinivasa ramanujan"]
-  },
-  {
-    text:
-`Question 5
+a:["c","aryabhata","ramanujan"]
+},
+{
+q:`Question 5
 What does Sankranti signify astronomically?
-
 a) Full moon day
 b) Sun’s transition into Capricorn (Makara Rashi)
 c) Start of winter
 d) Spring equinox`,
-    answers: ["b","makara rashi","sun’s transition into capricorn"]
-  },
-  {
-    text:
-`Question 6
+a:["b"]
+},
+{
+q:`Question 6
 Why are kites flown during Sankranti?
-
 a) For entertainment only
 b) To welcome the Sun’s northward journey (Uttarayan)
 c) To mark the monsoon season
 d) To scare birds away`,
-    answers: ["b","uttarayan","northward journey"]
-  }
+a:["b"]
+}
 ];
 
-/* 🎯 EXTRA QUESTION POOL (20 QUESTIONS) */
-const pool = [
-  { text: "Question 7\nEvaluate log(100) − log(10)", answers: ["1"] },
-  { text: "Question 8\nEvaluate log(1000) − log(10)", answers: ["2"] },
-  { text: "Question 9\n25% of 240", answers: ["60"] },
-  { text: "Question 10\n√196", answers: ["14"] },
-  { text: "Question 11\n99²", answers: ["9801"] },
-  { text: "Question 12\nDivide 80 in the ratio 3:5. Find the larger part.", answers: ["50"] },
-  { text: "Question 13\nIf f(x)=x²−1, find f(6)", answers: ["35"] },
-  { text: "Question 14\nIf f(x)=2x+5, find f(7)", answers: ["19"] },
-  { text: "Question 15\nSimplify: 3² × 5", answers: ["45"] },
-  { text: "Question 16\nFind the value of √144 + 6", answers: ["18"] },
-  { text: "Question 17\nWhat is 15% of 200?", answers: ["30"] },
-  { text: "Question 18\nIf y = 4(x−1)², what is the vertical stretch factor?", answers: ["4"] },
-  { text: "Question 19\nEvaluate: 2³ × 4", answers: ["32"] },
-  { text: "Question 20\nSimplify: 81 ÷ 9", answers: ["9"] },
-  { text: "Question 21\nSolve: 5x = 45. Find x.", answers: ["9"] },
-  { text: "Question 22\nFind the square of 17", answers: ["289"] },
-  { text: "Question 23\nIf f(x)=3x−2, find f(8)", answers: ["22"] },
-  { text: "Question 24\nEvaluate log(10000) − log(100)", answers: ["2"] },
-  { text: "Question 25\nFind 20% of 350", answers: ["70"] },
-  { text: "Question 26\nWhat is √225?", answers: ["15"] }
-];
-
-/* 🔀 SHUFFLE */
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
+/* HARD POOL (IB level) */
+const pool = [];
+for (let i=1;i<=20;i++){
+  pool.push({
+    q:`Pool Question ${i}
+If f(x) = x² + ${i}, find f(${i}).`,
+    a:[String(i*i+i)]
+  });
 }
 
-let questions = [];
-let index = 0;
-let score = 0;
-let time = 60;
-let timer;
-let player = "";
+questions = compulsory.concat(pool);
 
-/* 🚀 START GAME */
-async function startGame() {
+/* ---------- FUNCTIONS ---------- */
+function startGame(){
+  if(localStorage.getItem("played")) return alert("Only one attempt allowed!");
   player = document.getElementById("playerName").value.trim();
-  if (!player) return alert("Enter your name");
+  if(!player) return;
 
-  const exists = await db.collection("scores").doc(player).get();
-  if (exists.exists) {
-    alert("You have already attempted the game.");
-    return;
-  }
-
-  questions = compulsory.concat(shuffle(pool));
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
-
+  startTimer();
   loadQuestion();
-  timer = setInterval(updateTimer, 1000);
 }
 
-/* ⏱ TIMER */
-function updateTimer() {
-  time--;
-  document.getElementById("time").innerText = time;
-  if (time <= 0) endGame();
+function startTimer(){
+  timer = setInterval(()=>{
+    timeLeft--;
+    document.getElementById("time").innerText = timeLeft;
+    if(timeLeft<=0) endGame();
+  },1000);
 }
 
-/* ❓ LOAD QUESTION */
-function loadQuestion() {
-  if (index >= questions.length) return endGame();
-
-  document.getElementById("questionNumber").innerText =
-    `Question ${index + 1} of ${questions.length}`;
-
-  document.getElementById("questionText").innerText =
-    questions[index].text;
-
-  document.getElementById("answerInput").value = "";
+function loadQuestion(){
+  if(index>=questions.length) return endGame();
+  document.getElementById("qCounter").innerText =
+    `Question ${index+1} of ${questions.length}`;
+  document.getElementById("questionText").innerText = questions[index].q;
+  document.getElementById("answerInput").value="";
 }
 
-/* ✅ SUBMIT ANSWER */
-function submitAnswer() {
-  const ans = document.getElementById("answerInput").value
-    .toLowerCase().trim();
-
-  if (questions[index].answers.some(a => ans.includes(a))) {
-    score += 10;
-  }
-
-  document.getElementById("score").innerText = score;
+function submitAnswer(){
+  let ans = document.getElementById("answerInput").value.toLowerCase().trim();
+  if(questions[index].a.some(a=>ans.includes(a))) score+=5;
+  document.getElementById("score").innerText=score;
   index++;
   loadQuestion();
 }
 
-/* 🏁 END GAME */
-async function endGame() {
+function endGame(){
   clearInterval(timer);
-
-  await db.collection("scores").doc(player).set({
-    name: player,
-    score: score,
-    time: Date.now()
-  });
-
-  showLeaderboard();
-}
-
-/* 🏆 LEADERBOARD */
-async function showLeaderboard() {
+  localStorage.setItem("played","yes");
   document.getElementById("gamePage").classList.add("hidden");
   document.getElementById("leaderboardPage").classList.remove("hidden");
 
-  const snap = await db.collection("scores")
+  db.collection("scores").add({
+    name: player,
+    score: score,
+    time: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  loadLeaderboard();
+}
+
+function loadLeaderboard(){
+  db.collection("scores")
     .orderBy("score","desc")
     .limit(10)
-    .get();
-
-  const list = document.getElementById("leaderboardList");
-  list.innerHTML = "";
-
-  snap.docs.forEach((doc, i) => {
-    const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
-    list.innerHTML +=
-      `<li>${medal} ${doc.data().name} — ${doc.data().score}</li>`;
-  });
+    .onSnapshot(snap=>{
+      const list=document.getElementById("leaderboardList");
+      list.innerHTML="";
+      snap.docs.forEach((d,i)=>{
+        let cls=i==0?"gold":i==1?"silver":i==2?"bronze":"";
+        let medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"";
+        list.innerHTML+=
+          `<li class="${cls}">${medal} ${d.data().name} — ${d.data().score}</li>`;
+      });
+    });
 }
 </script>
-
 </body>
 </html>
