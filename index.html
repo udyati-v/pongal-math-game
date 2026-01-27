@@ -5,268 +5,173 @@
 <title>Pongal Math Harvest</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* ---------- GLOBAL ---------- */
-body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(#ffd54f, #ffb74d);
-  overflow-x: hidden;
+body{
+  margin:0;
+  font-family:Segoe UI,sans-serif;
+  background:linear-gradient(#ffd54f,#ffb74d);
 }
-
-/* ---------- ANIMATED BACKGROUND ---------- */
-.sun {
-  position: fixed;
-  top: 40px;
-  right: 40px;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, #fff176, #fbc02d);
-  border-radius: 50%;
-  animation: pulse 4s infinite;
-  z-index: -1;
+.sun{
+  position:fixed;top:40px;right:40px;width:120px;height:120px;
+  background:radial-gradient(circle,#fff176,#fbc02d);
+  border-radius:50%;animation:pulse 4s infinite;z-index:-1;
 }
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+@keyframes pulse{50%{transform:scale(1.1)}}
+.kite{
+  position:fixed;width:50px;height:50px;background:red;
+  transform:rotate(45deg);animation:fly 12s linear infinite;z-index:-1;
 }
-
-.kite {
-  position: fixed;
-  width: 50px;
-  height: 50px;
-  background: red;
-  transform: rotate(45deg);
-  animation: fly 12s linear infinite;
-  z-index: -1;
+@keyframes fly{from{left:-60px;top:70%}to{left:110%;top:10%}}
+.card{
+  max-width:650px;margin:60px auto;background:#fff8e1;
+  padding:25px;border-radius:18px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.2);text-align:center;
 }
-
-.kite::after {
-  content: "";
-  position: absolute;
-  width: 2px;
-  height: 80px;
-  background: #444;
-  top: 50px;
-  left: 25px;
-}
-
-@keyframes fly {
-  from { left: -60px; top: 60%; }
-  to { left: 110%; top: 10%; }
-}
-
-/* ---------- CARD ---------- */
-.card {
-  max-width: 650px;
-  margin: 60px auto;
-  background: #fff8e1;
-  padding: 25px;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-  text-align: center;
-}
-
-h1 {
-  color: #6d4c41;
-}
-
-input, button {
-  padding: 12px;
-  font-size: 16px;
-  margin-top: 12px;
-  width: 90%;
-}
-
-button {
-  background: #43a047;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button:disabled {
-  background: #9e9e9e;
-}
-
-.hidden {
-  display: none;
-}
-
-/* ---------- LEADERBOARD ---------- */
-.leaderboard {
-  margin-top: 20px;
-  text-align: left;
-}
-
-.leaderboard li {
-  font-size: 18px;
-  margin: 6px 0;
-}
-
-.gold { color: gold; }
-.silver { color: silver; }
-.bronze { color: #cd7f32; }
+input,button{padding:12px;font-size:16px;width:90%;margin-top:12px}
+button{background:#43a047;color:#fff;border:none;border-radius:8px}
+.hidden{display:none}
+.gold{color:gold}.silver{color:silver}.bronze{color:#cd7f32}
 </style>
 </head>
 
 <body>
-
 <div class="sun"></div>
 <div class="kite"></div>
 
-<!-- START PAGE -->
+<!-- START -->
 <div class="card" id="startPage">
-  <h1>🌾 Pongal Math Harvest ☀️</h1>
-  <p><b>Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️</b></p>
-  <input id="playerName" placeholder="Enter your name">
-  <button onclick="startGame()">Start Game</button>
+<h1>🌾 Pongal Math Harvest ☀️</h1>
+<p><b>Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️</b></p>
+<input id="playerName" placeholder="Enter your name">
+<button onclick="startGame()">Start Game</button>
 </div>
 
-<!-- GAME PAGE -->
+<!-- GAME -->
 <div class="card hidden" id="gamePage">
-  <h2 id="qCounter"></h2>
-  <p id="questionText"></p>
-  <input id="answerInput" placeholder="Type answer">
-  <button onclick="submitAnswer()">Submit</button>
-  <p>⏱ Time Left: <span id="time">60</span>s</p>
-  <p>⭐ Score: <span id="score">0</span></p>
+<h2 id="qCounter"></h2>
+<p id="questionText"></p>
+<input id="answerInput" placeholder="Type answer">
+<button onclick="submitAnswer()">Submit</button>
+<p>⏱ Time Left: <span id="time">60</span>s</p>
+<p>⭐ Score: <span id="score">0</span></p>
 </div>
 
-<!-- LEADERBOARD PAGE -->
+<!-- LEADERBOARD -->
 <div class="card hidden" id="leaderboardPage">
-  <h2>🏆 Global Leaderboard (Top 10)</h2>
-  <ol id="leaderboardList" class="leaderboard"></ol>
+<h2>🏆 Global Leaderboard (Top 10)</h2>
+<ol id="leaderboardList"></ol>
 </div>
 
 <script>
-/* ---------- FIREBASE ---------- */
 firebase.initializeApp({
-  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
-  authDomain: "pongal-math-game.firebaseapp.com",
-  projectId: "pongal-math-game"
+  apiKey:"AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
+  authDomain:"pongal-math-game.firebaseapp.com",
+  projectId:"pongal-math-game"
 });
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-/* ---------- GAME STATE ---------- */
-let questions = [];
-let index = 0;
-let score = 0;
-let timer;
-let timeLeft = 60;
-let player = "";
+let questions=[],i=0,score=0,time=60,timer,name="";
 
-/* ---------- QUESTIONS ---------- */
-const compulsory = [
-{
-q:`Question 1
+/* -------- COMPULSORY QUESTIONS -------- */
+const compulsory=[
+{q:`Question 1
 Total Harvest = 750 kg
 Rice constitutes 40% of the total harvest.
 How many kilograms of rice were harvested?
 a) 300 kg
 b) 250 kg
-c) 350 kg`,
-a:["a","300","300 kg"]
-},
-{
-q:`Question 2
+c) 350 kg`,a:["a","300","300 kg"]},
+
+{q:`Question 2
 The field harvest rate is 120 kg per hour.
 How long will it take to harvest 360 kg?
 a) 2.5 hours
 b) 3 hours
-c) 3.5 hours`,
-a:["b","3","3 hours"]
-},
-{
-q:`Question 3
+c) 3.5 hours`,a:["b","3","3 hours"]},
+
+{q:`Question 3
 What percentage of pulses are harvested?
 (Refer to the invite)
 a) 10%
 b) 40%
-c) 20%`,
-a:["a","10","10%"]
-},
-{
-q:`Question 4
+c) 20%`,a:["a","10","10%"]},
+
+{q:`Question 4
 Who are the mathematicians shown taming the bull in the invite?
 a) Pythagoras and Carl Friedrich Gauss
 b) Euler and Archimedes
-c) Aryabhata and Srinivasa Ramanujan`,
-a:["c","aryabhata","ramanujan"]
-},
-{
-q:`Question 5
+c) Aryabhata and Srinivasa Ramanujan`,a:["c","aryabhata","ramanujan"]},
+
+{q:`Question 5
 What does Sankranti signify astronomically?
 a) Full moon day
 b) Sun’s transition into Capricorn (Makara Rashi)
 c) Start of winter
-d) Spring equinox`,
-a:["b"]
-},
-{
-q:`Question 6
+d) Spring equinox`,a:["b"]},
+
+{q:`Question 6
 Why are kites flown during Sankranti?
 a) For entertainment only
 b) To welcome the Sun’s northward journey (Uttarayan)
 c) To mark the monsoon season
-d) To scare birds away`,
-a:["b"]
-}
+d) To scare birds away`,a:["b"]}
 ];
 
-/* HARD POOL (IB level) */
-const pool = [];
-for (let i=1;i<=20;i++){
-  pool.push({
-    q:`Pool Question ${i}
-If f(x) = x² + ${i}, find f(${i}).`,
-    a:[String(i*i+i)]
-  });
-}
+/* -------- MIXED HARD POOL (20) -------- */
+const pool=[
+{q:`If f(x)=2x²−3, find f(4).`,a:["29"]},
+{q:`Evaluate: log₁₀(1000) − log₁₀(10).`,a:["2"]},
+{q:`Divide ₹1800 in the ratio 2:3. Find the larger share.`,a:["1080"]},
+{q:`If y=x² is translated 3 units right, write the new function.`,a:["(x-3)^2","(x − 3)^2"]},
+{q:`During Pongal, 5 kg rice feeds 8 people. How many people will 20 kg feed?`,a:["32"]},
+{q:`If f(x)=x²+2x, find f(−3).`,a:["3"]},
+{q:`Simplify: log₁₀(50)+log₁₀(2).`,a:["2"]},
+{q:`A field yields rice:pulses in ratio 7:1. Find % of pulses.`,a:["12.5","12.5%"]},
+{q:`If y=3x² is vertically stretched, what is the stretch factor?`,a:["3"]},
+{q:`A farmer increases yield from 200kg to 260kg. Find % increase.`,a:["30","30%"]},
+{q:`If f(x)=x−4, find f⁻¹(x).`,a:["x+4"]},
+{q:`Evaluate log₁₀(1).`,a:["0"]},
+{q:`Divide 360kg in ratio 5:7. Find the smaller part.`,a:["150"]},
+{q:`Translate y=x² up by 5 units. Write equation.`,a:["x^2+5"]},
+{q:`A Pongal pot holds 4L milk. How many such pots for 18L?`,a:["5"]},
+{q:`If f(x)=3x−1, find f(5).`,a:["14"]},
+{q:`Evaluate: log₁₀(100) + log₁₀(1000).`,a:["5"]},
+{q:`Rice:Sugarcane = 4:9. Total = 260kg. Find sugarcane.`,a:["180"]},
+{q:`Reflect y=x² in x-axis. Write equation.`,a:["-x^2"]},
+{q:`A farmer doubles rice yield from 120kg. New yield?`,a:["240"]}
+];
 
 questions = compulsory.concat(pool);
 
-/* ---------- FUNCTIONS ---------- */
+/* -------- GAME LOGIC -------- */
 function startGame(){
-  if(localStorage.getItem("played")) return alert("Only one attempt allowed!");
-  player = document.getElementById("playerName").value.trim();
-  if(!player) return;
-
+  if(localStorage.getItem("played")) return alert("Only one attempt allowed");
+  name=document.getElementById("playerName").value.trim();
+  if(!name) return;
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
-  startTimer();
-  loadQuestion();
+  startTimer();loadQ();
 }
 
 function startTimer(){
-  timer = setInterval(()=>{
-    timeLeft--;
-    document.getElementById("time").innerText = timeLeft;
-    if(timeLeft<=0) endGame();
-  },1000);
+  timer=setInterval(()=>{time--;document.getElementById("time").innerText=time;
+  if(time<=0)endGame()},1000);
 }
 
-function loadQuestion(){
-  if(index>=questions.length) return endGame();
-  document.getElementById("qCounter").innerText =
-    `Question ${index+1} of ${questions.length}`;
-  document.getElementById("questionText").innerText = questions[index].q;
+function loadQ(){
+  if(i>=questions.length)return endGame();
+  document.getElementById("qCounter").innerText=`Question ${i+1} of ${questions.length}`;
+  document.getElementById("questionText").innerText=questions[i].q;
   document.getElementById("answerInput").value="";
 }
 
 function submitAnswer(){
-  let ans = document.getElementById("answerInput").value.toLowerCase().trim();
-  if(questions[index].a.some(a=>ans.includes(a))) score+=5;
-  document.getElementById("score").innerText=score;
-  index++;
-  loadQuestion();
+  let a=document.getElementById("answerInput").value.toLowerCase();
+  if(questions[i].a.some(x=>a.includes(x)))score+=5;
+  document.getElementById("score").innerText=score;i++;loadQ();
 }
 
 function endGame(){
@@ -274,30 +179,13 @@ function endGame(){
   localStorage.setItem("played","yes");
   document.getElementById("gamePage").classList.add("hidden");
   document.getElementById("leaderboardPage").classList.remove("hidden");
-
-  db.collection("scores").add({
-    name: player,
-    score: score,
-    time: firebase.firestore.FieldValue.serverTimestamp()
+  db.collection("scores").add({name,score,time:firebase.firestore.FieldValue.serverTimestamp()});
+  db.collection("scores").orderBy("score","desc").limit(10)
+  .onSnapshot(s=>{let l=document.getElementById("leaderboardList");l.innerHTML="";
+    s.forEach((d,i)=>l.innerHTML+=
+      `<li class="${i==0?"gold":i==1?"silver":i==2?"bronze":""}">
+      ${i==0?"🥇":i==1?"🥈":i==2?"🥉":""} ${d.data().name} — ${d.data().score}</li>`);
   });
-
-  loadLeaderboard();
-}
-
-function loadLeaderboard(){
-  db.collection("scores")
-    .orderBy("score","desc")
-    .limit(10)
-    .onSnapshot(snap=>{
-      const list=document.getElementById("leaderboardList");
-      list.innerHTML="";
-      snap.docs.forEach((d,i)=>{
-        let cls=i==0?"gold":i==1?"silver":i==2?"bronze":"";
-        let medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"";
-        list.innerHTML+=
-          `<li class="${cls}">${medal} ${d.data().name} — ${d.data().score}</li>`;
-      });
-    });
 }
 </script>
 </body>
