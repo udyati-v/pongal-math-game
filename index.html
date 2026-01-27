@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pongal Math Harvest</title>
 
 <!-- Firebase -->
@@ -14,19 +14,19 @@ body {
   font-family: Arial, sans-serif;
   background: linear-gradient(#f6d365, #fda085);
   margin: 0;
-  padding: 0;
   text-align: center;
 }
 .card {
   background: #fff7e6;
   margin: 40px auto;
   padding: 20px;
-  border-radius: 20px;
+  border-radius: 18px;
   width: 90%;
-  max-width: 420px;
+  max-width: 430px;
 }
+.hidden { display: none; }
 button {
-  padding: 10px 20px;
+  padding: 10px 18px;
   border: none;
   border-radius: 10px;
   background: #28c76f;
@@ -39,7 +39,6 @@ input {
   width: 80%;
   margin: 10px;
 }
-.hidden { display: none; }
 .leaderboard li {
   text-align: left;
   margin: 6px 0;
@@ -53,17 +52,18 @@ input {
 <div class="card" id="startPage">
   <h1>🌾 Pongal Math Harvest 🌞</h1>
   <p><b>Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️</b></p>
-  <input type="text" id="playerName" placeholder="Enter your name"/>
+  <input type="text" id="playerName" placeholder="Enter your name">
   <br>
   <button onclick="startGame()">Start Game</button>
 </div>
 
 <!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
-  <h2 id="questionText"></h2>
-  <input id="answerInput" placeholder="Type answer (A/B/C or value)"/>
-  <br><br>
-  <button onclick="submitAnswer()">Harvest!</button>
+  <h3 id="questionNumber"></h3>
+  <pre id="questionText"></pre>
+  <input id="answerInput" placeholder="Type a / b / c / value">
+  <br>
+  <button onclick="submitAnswer()">Submit</button>
   <p>⏱ Time Left: <span id="time">60</span>s</p>
   <p>⭐ Score: <span id="score">0</span></p>
 </div>
@@ -85,103 +85,157 @@ const firebaseConfig = {
   messagingSenderId: "656858683321",
   appId: "1:656858683321:web:dc3f28c9c92e3394778868"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* 🔒 ALL COMPULSORY QUESTIONS (EXACT WORDING) */
-const compulsory = [
+/* 🔒 COMPULSORY QUESTIONS — FIXED FORMAT */
+const questions = [
   {
-    q: "1) Total Harvest 750KG\nRice = 40%\nHow much kg Rice harvested\na-300kg\nb-250kg\nc-350",
-    a: ["a","300","300kg"]
+    text:
+`Question 1
+Total Harvest = 750 kg
+Rice constitutes 40% of the total harvest.
+How many kilograms of rice were harvested?
+
+a) 300 kg
+b) 250 kg
+c) 350 kg`,
+    answers: ["a","300","300 kg"]
   },
   {
-    q: "2) Field Harvest Rate = 120kg/hr\nHow long to harvest 360kg?\na-2.5hr\nb-3hr\nc-3.5hr",
-    a: ["b","3","3hr","3hrs"]
+    text:
+`Question 2
+The field harvest rate is 120 kg per hour.
+How long will it take to harvest 360 kg?
+
+a) 2.5 hours
+b) 3 hours
+c) 3.5 hours`,
+    answers: ["b","3","3 hours","3hrs"]
   },
   {
-    q: "3) What % of pulses harvested? (Check invite)\na-10%\nb-40%\nc-20%",
-    a: ["a","10","10%"]
+    text:
+`Question 3
+What percentage of pulses are harvested?
+(Refer to the invite)
+
+a) 10%
+b) 40%
+c) 20%`,
+    answers: ["a","10","10%"]
   },
   {
-    q: "4) Who are the men taming bull, per the invite ?\na) Pythagoras, Carl Friedrich Gauss\nb) Euler, Archimedes\nc) Aryabhata, Srinivasa Ramanujan",
-    a: ["c","aryabhata","srinivasa ramanujan","ramanujan"]
+    text:
+`Question 4
+Who are the mathematicians shown taming the bull in the invite?
+
+a) Pythagoras and Carl Friedrich Gauss
+b) Euler and Archimedes
+c) Aryabhata and Srinivasa Ramanujan`,
+    answers: ["c","aryabhata","ramanujan","srinivasa ramanujan"]
   },
   {
-    q: "4) What does Sankranti signify astronomically?\nA) Full moon day\nB) Sun’s transition into Capricorn (Makara Rashi)\nC) Start of winter\nD) Spring equinox",
-    a: ["b","sun’s transition into capricorn","makara rashi"]
+    text:
+`Question 5
+What does Sankranti signify astronomically?
+
+a) Full moon day
+b) Sun’s transition into Capricorn (Makara Rashi)
+c) Start of winter
+d) Spring equinox`,
+    answers: ["b","makara rashi","sun’s transition into capricorn"]
   },
   {
-    q: "5) Why are kites flown during Sankranti?\nA) For entertainment only\nB) To welcome the sun’s northward journey (Uttarayan)\nC) To mark the monsoon season\nD) To scare birds away",
-    a: ["b","uttarayan","northward journey"]
+    text:
+`Question 6
+Why are kites flown during Sankranti?
+
+a) For entertainment only
+b) To welcome the Sun’s northward journey (Uttarayan)
+c) To mark the monsoon season
+d) To scare birds away`,
+    answers: ["b","uttarayan","northward journey"]
   }
 ];
 
-let questions = [];
 let index = 0;
 let score = 0;
 let time = 60;
 let timer;
 let player = "";
 
-/* START GAME */
+/* 🚀 START GAME */
 async function startGame() {
   player = document.getElementById("playerName").value.trim();
-  if (!player) return alert("Enter name");
+  if (!player) return alert("Enter your name");
 
-  const existing = await db.collection("scores").doc(player).get();
-  if (existing.exists) {
-    alert("You have already played!");
+  const exists = await db.collection("scores").doc(player).get();
+  if (exists.exists) {
+    alert("You have already attempted the game.");
     return;
   }
 
-  questions = compulsory;
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
+
   loadQuestion();
   timer = setInterval(updateTimer, 1000);
 }
 
-/* TIMER */
+/* ⏱ TIMER */
 function updateTimer() {
   time--;
   document.getElementById("time").innerText = time;
   if (time <= 0) endGame();
 }
 
-/* QUESTIONS */
+/* ❓ LOAD QUESTION */
 function loadQuestion() {
   if (index >= questions.length) return endGame();
-  document.getElementById("questionText").innerText = questions[index].q;
+
+  document.getElementById("questionNumber").innerText =
+    `Question ${index + 1} of ${questions.length}`;
+
+  document.getElementById("questionText").innerText =
+    questions[index].text;
+
   document.getElementById("answerInput").value = "";
 }
 
+/* ✅ SUBMIT ANSWER */
 function submitAnswer() {
-  const ans = document.getElementById("answerInput").value.toLowerCase().trim();
-  if (questions[index].a.some(a => ans.includes(a))) score += 10;
+  const ans = document.getElementById("answerInput").value
+    .toLowerCase().trim();
+
+  if (questions[index].answers.some(a => ans.includes(a))) {
+    score += 10;
+  }
+
   document.getElementById("score").innerText = score;
   index++;
   loadQuestion();
 }
 
-/* END GAME */
+/* 🏁 END GAME */
 async function endGame() {
   clearInterval(timer);
+
   await db.collection("scores").doc(player).set({
     name: player,
     score: score,
     time: Date.now()
   });
+
   showLeaderboard();
 }
 
-/* LEADERBOARD */
+/* 🏆 LEADERBOARD */
 async function showLeaderboard() {
   document.getElementById("gamePage").classList.add("hidden");
   document.getElementById("leaderboardPage").classList.remove("hidden");
 
   const snap = await db.collection("scores")
-    .orderBy("score", "desc")
+    .orderBy("score","desc")
     .limit(10)
     .get();
 
@@ -189,8 +243,9 @@ async function showLeaderboard() {
   list.innerHTML = "";
 
   snap.docs.forEach((doc, i) => {
-    let medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "";
-    list.innerHTML += `<li>${medal} ${doc.data().name} — ${doc.data().score}</li>`;
+    const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
+    list.innerHTML +=
+      `<li>${medal} ${doc.data().name} — ${doc.data().score}</li>`;
   });
 }
 </script>
