@@ -43,6 +43,10 @@ input {
   text-align: left;
   margin: 6px 0;
 }
+pre {
+  white-space: pre-wrap;
+  text-align: left;
+}
 </style>
 </head>
 
@@ -72,7 +76,6 @@ input {
 <div class="card hidden" id="leaderboardPage">
   <h2>🏆 Global Leaderboard</h2>
   <ol class="leaderboard" id="leaderboardList"></ol>
-  <button onclick="location.reload()">Play Again</button>
 </div>
 
 <script>
@@ -88,8 +91,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* 🔒 COMPULSORY QUESTIONS — FIXED FORMAT */
-const questions = [
+/* 🔒 COMPULSORY QUESTIONS (Q1–Q6) */
+const compulsory = [
   {
     text:
 `Question 1
@@ -158,6 +161,36 @@ d) To scare birds away`,
   }
 ];
 
+/* 🎯 EXTRA QUESTION POOL (20 QUESTIONS) */
+const pool = [
+  { text: "Question 7\nEvaluate log(100) − log(10)", answers: ["1"] },
+  { text: "Question 8\nEvaluate log(1000) − log(10)", answers: ["2"] },
+  { text: "Question 9\n25% of 240", answers: ["60"] },
+  { text: "Question 10\n√196", answers: ["14"] },
+  { text: "Question 11\n99²", answers: ["9801"] },
+  { text: "Question 12\nDivide 80 in the ratio 3:5. Find the larger part.", answers: ["50"] },
+  { text: "Question 13\nIf f(x)=x²−1, find f(6)", answers: ["35"] },
+  { text: "Question 14\nIf f(x)=2x+5, find f(7)", answers: ["19"] },
+  { text: "Question 15\nSimplify: 3² × 5", answers: ["45"] },
+  { text: "Question 16\nFind the value of √144 + 6", answers: ["18"] },
+  { text: "Question 17\nWhat is 15% of 200?", answers: ["30"] },
+  { text: "Question 18\nIf y = 4(x−1)², what is the vertical stretch factor?", answers: ["4"] },
+  { text: "Question 19\nEvaluate: 2³ × 4", answers: ["32"] },
+  { text: "Question 20\nSimplify: 81 ÷ 9", answers: ["9"] },
+  { text: "Question 21\nSolve: 5x = 45. Find x.", answers: ["9"] },
+  { text: "Question 22\nFind the square of 17", answers: ["289"] },
+  { text: "Question 23\nIf f(x)=3x−2, find f(8)", answers: ["22"] },
+  { text: "Question 24\nEvaluate log(10000) − log(100)", answers: ["2"] },
+  { text: "Question 25\nFind 20% of 350", answers: ["70"] },
+  { text: "Question 26\nWhat is √225?", answers: ["15"] }
+];
+
+/* 🔀 SHUFFLE */
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+let questions = [];
 let index = 0;
 let score = 0;
 let time = 60;
@@ -175,6 +208,7 @@ async function startGame() {
     return;
   }
 
+  questions = compulsory.concat(shuffle(pool));
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
 
