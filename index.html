@@ -5,6 +5,7 @@
 <title>Pongal Math Harvest</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -38,10 +39,11 @@ button{background:#43a047;color:#fff;border:none;border-radius:8px}
 </head>
 
 <body>
+
 <div class="sun"></div>
 <div class="kite"></div>
 
-<!-- START -->
+<!-- START PAGE -->
 <div class="card" id="startPage">
 <h1>🌾 Pongal Math Harvest ☀️</h1>
 <p><b>Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️</b></p>
@@ -49,7 +51,7 @@ button{background:#43a047;color:#fff;border:none;border-radius:8px}
 <button onclick="startGame()">Start Game</button>
 </div>
 
-<!-- GAME -->
+<!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
 <h2 id="qCounter"></h2>
 <p id="questionText"></p>
@@ -59,7 +61,7 @@ button{background:#43a047;color:#fff;border:none;border-radius:8px}
 <p>⭐ Score: <span id="score">0</span></p>
 </div>
 
-<!-- LEADERBOARD -->
+<!-- LEADERBOARD PAGE -->
 <div class="card hidden" id="leaderboardPage">
 <h2>🏆 Global Leaderboard (Top 10)</h2>
 <ol id="leaderboardList"></ol>
@@ -92,15 +94,16 @@ a) 2.5 hours
 b) 3 hours
 c) 3.5 hours`,a:["b","3","3 hours"]},
 
+/* 🔄 UPDATED QUESTION 3 */
 {q:`Question 3
-What percentage of pulses are harvested?
-(Refer to the invite)
-a) 10%
-b) 40%
-c) 20%`,a:["a","10","10%"]},
+July – June signifies:
+a) Crop year
+b) Financial year
+c) Academic year`,a:["a","crop year"]},
 
+/* 🔄 UPDATED QUESTION 4 */
 {q:`Question 4
-Who are the mathematicians shown taming the bull in the invite?
+Who are the mathematicians shown beside the cow?
 a) Pythagoras and Carl Friedrich Gauss
 b) Euler and Archimedes
 c) Aryabhata and Srinivasa Ramanujan`,a:["c","aryabhata","ramanujan"]},
@@ -120,27 +123,27 @@ c) To mark the monsoon season
 d) To scare birds away`,a:["b"]}
 ];
 
-/* -------- MIXED HARD POOL (20) -------- */
+/* -------- MIXED HARD POOL (20 QUESTIONS) -------- */
 const pool=[
 {q:`If f(x)=2x²−3, find f(4).`,a:["29"]},
 {q:`Evaluate: log₁₀(1000) − log₁₀(10).`,a:["2"]},
 {q:`Divide ₹1800 in the ratio 2:3. Find the larger share.`,a:["1080"]},
-{q:`If y=x² is translated 3 units right, write the new function.`,a:["(x-3)^2","(x − 3)^2"]},
+{q:`If y=x² is translated 3 units right, write the new function.`,a:["(x-3)^2"]},
 {q:`During Pongal, 5 kg rice feeds 8 people. How many people will 20 kg feed?`,a:["32"]},
 {q:`If f(x)=x²+2x, find f(−3).`,a:["3"]},
 {q:`Simplify: log₁₀(50)+log₁₀(2).`,a:["2"]},
 {q:`A field yields rice:pulses in ratio 7:1. Find % of pulses.`,a:["12.5","12.5%"]},
-{q:`If y=3x² is vertically stretched, what is the stretch factor?`,a:["3"]},
+{q:`If y=3x², state the vertical stretch factor.`,a:["3"]},
 {q:`A farmer increases yield from 200kg to 260kg. Find % increase.`,a:["30","30%"]},
 {q:`If f(x)=x−4, find f⁻¹(x).`,a:["x+4"]},
 {q:`Evaluate log₁₀(1).`,a:["0"]},
 {q:`Divide 360kg in ratio 5:7. Find the smaller part.`,a:["150"]},
-{q:`Translate y=x² up by 5 units. Write equation.`,a:["x^2+5"]},
+{q:`Translate y=x² up by 5 units.`,a:["x^2+5"]},
 {q:`A Pongal pot holds 4L milk. How many such pots for 18L?`,a:["5"]},
 {q:`If f(x)=3x−1, find f(5).`,a:["14"]},
-{q:`Evaluate: log₁₀(100) + log₁₀(1000).`,a:["5"]},
-{q:`Rice:Sugarcane = 4:9. Total = 260kg. Find sugarcane.`,a:["180"]},
-{q:`Reflect y=x² in x-axis. Write equation.`,a:["-x^2"]},
+{q:`Evaluate log₁₀(100)+log₁₀(1000).`,a:["5"]},
+{q:`Rice:Sugarcane = 4:9, total = 260kg. Find sugarcane.`,a:["180"]},
+{q:`Reflect y=x² in x-axis.`,a:["-x^2"]},
 {q:`A farmer doubles rice yield from 120kg. New yield?`,a:["240"]}
 ];
 
@@ -157,13 +160,17 @@ function startGame(){
 }
 
 function startTimer(){
-  timer=setInterval(()=>{time--;document.getElementById("time").innerText=time;
-  if(time<=0)endGame()},1000);
+  timer=setInterval(()=>{
+    time--;
+    document.getElementById("time").innerText=time;
+    if(time<=0)endGame();
+  },1000);
 }
 
 function loadQ(){
   if(i>=questions.length)return endGame();
-  document.getElementById("qCounter").innerText=`Question ${i+1} of ${questions.length}`;
+  document.getElementById("qCounter").innerText=
+    `Question ${i+1} of ${questions.length}`;
   document.getElementById("questionText").innerText=questions[i].q;
   document.getElementById("answerInput").value="";
 }
@@ -171,7 +178,8 @@ function loadQ(){
 function submitAnswer(){
   let a=document.getElementById("answerInput").value.toLowerCase();
   if(questions[i].a.some(x=>a.includes(x)))score+=5;
-  document.getElementById("score").innerText=score;i++;loadQ();
+  document.getElementById("score").innerText=score;
+  i++;loadQ();
 }
 
 function endGame(){
@@ -179,14 +187,24 @@ function endGame(){
   localStorage.setItem("played","yes");
   document.getElementById("gamePage").classList.add("hidden");
   document.getElementById("leaderboardPage").classList.remove("hidden");
-  db.collection("scores").add({name,score,time:firebase.firestore.FieldValue.serverTimestamp()});
-  db.collection("scores").orderBy("score","desc").limit(10)
-  .onSnapshot(s=>{let l=document.getElementById("leaderboardList");l.innerHTML="";
-    s.forEach((d,i)=>l.innerHTML+=
-      `<li class="${i==0?"gold":i==1?"silver":i==2?"bronze":""}">
-      ${i==0?"🥇":i==1?"🥈":i==2?"🥉":""} ${d.data().name} — ${d.data().score}</li>`);
+  db.collection("scores").add({
+    name,score,
+    time:firebase.firestore.FieldValue.serverTimestamp()
   });
+  db.collection("scores")
+    .orderBy("score","desc").limit(10)
+    .onSnapshot(s=>{
+      let l=document.getElementById("leaderboardList");
+      l.innerHTML="";
+      s.forEach((d,i)=>{
+        let medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"";
+        let cls=i==0?"gold":i==1?"silver":i==2?"bronze":"";
+        l.innerHTML+=
+          `<li class="${cls}">${medal} ${d.data().name} — ${d.data().score}</li>`;
+      });
+    });
 }
 </script>
+
 </body>
 </html>
