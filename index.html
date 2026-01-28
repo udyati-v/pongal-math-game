@@ -54,6 +54,7 @@ button{background:#43a047;color:#fff;border:none;border-radius:8px}
 <!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
 <h2 id="qCounter"></h2>
+<p id="introText"></p>
 <p id="questionText"></p>
 <input id="answerInput" placeholder="Type answer">
 <button onclick="submitAnswer()">Submit</button>
@@ -77,53 +78,56 @@ const db=firebase.firestore();
 
 let questions=[],i=0,score=0,time=60,timer,name="";
 
-/* -------- COMPULSORY QUESTIONS -------- */
+/* -------- UPDATED COMPULSORY QUESTIONS (Q1–Q7) -------- */
 const compulsory=[
 {q:`Question 1
-Total Harvest = 750 kg
-Rice constitutes 40% of the total harvest.
-How many kilograms of rice were harvested?
-a) 300 kg
-b) 250 kg
-c) 350 kg`,a:["a","300","300 kg"]},
-
-{q:`Question 2
-The field harvest rate is 120 kg per hour.
-How long will it take to harvest 360 kg?
-a) 2.5 hours
-b) 3 hours
-c) 3.5 hours`,a:["b","3","3 hours"]},
-
-/* 🔄 UPDATED QUESTION 3 */
-{q:`Question 3
-July – June signifies:
+What does July – June signify:
 a) Crop year
 b) Financial year
 c) Academic year`,a:["a","crop year"]},
 
-/* 🔄 UPDATED QUESTION 4 */
-{q:`Question 4
-Who are the mathematicians shown beside the cow?
-a) Pythagoras and Carl Friedrich Gauss
-b) Euler and Archimedes
-c) Aryabhata and Srinivasa Ramanujan`,a:["c","aryabhata","ramanujan"]},
+{q:`Question 2
+Pi hide & seek! Spot the pi in the invite
+a) Temple
+b) Stove
+c) Sugarcane`,a:["b","stove"]},
 
-{q:`Question 5
+{q:`Question 3
+Spot the handsome duo in this flyer?
+(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
+a) Harish Chandra and Bhaskaracharya
+b) P.C. Mahalanobis and Satyendra Nath Bose
+c) Srinivasa Ramanujan and Aryabhata`,a:["c","ramanujan","aryabhata"]},
+
+{q:`Question 4
 What does Sankranti signify astronomically?
 a) Full moon day
 b) Sun’s transition into Capricorn (Makara Rashi)
 c) Start of winter
 d) Spring equinox`,a:["b"]},
 
-{q:`Question 6
+{q:`Question 5
 Why are kites flown during Sankranti?
 a) For entertainment only
-b) To welcome the Sun’s northward journey (Uttarayan)
+b) To scare birds away
 c) To mark the monsoon season
-d) To scare birds away`,a:["b"]}
+d) To welcome the Sun’s northward journey (Uttarayan)`,a:["d","uttarayan"]},
+
+{q:`Question 6
+Stove ain't apple pie😂, it’s π… why?
+a) Nature’s infinite harvest loop in life’s eternal abundance circle
+b) Because π represents the number of cashews used in making pongal`,a:["a"]},
+
+{q:`Question 7
+Total Harvest = 750 kg
+Rice constitutes 40% of the total harvest.
+How many kilograms of rice were harvested?
+a) 300 kg
+b) 250 kg
+c) 350 kg`,a:["a","300","300 kg"]}
 ];
 
-/* -------- MIXED HARD POOL (20 QUESTIONS) -------- */
+/* -------- POOL QUESTIONS (UNCHANGED) -------- */
 const pool=[
 {q:`If f(x)=2x²−3, find f(4).`,a:["29"]},
 {q:`Evaluate: log₁₀(1000) − log₁₀(10).`,a:["2"]},
@@ -169,8 +173,14 @@ function startTimer(){
 
 function loadQ(){
   if(i>=questions.length)return endGame();
-  document.getElementById("qCounter").innerText=
+
+  document.getElementById("qCounter").innerText =
     `Question ${i+1} of ${questions.length}`;
+
+  // 🔔 Special intro ONLY for first question
+  document.getElementById("introText").innerText =
+    i===0 ? "Start sweet: Brownie questions for Sihi huggi bonus points!" : "";
+
   document.getElementById("questionText").innerText=questions[i].q;
   document.getElementById("answerInput").value="";
 }
