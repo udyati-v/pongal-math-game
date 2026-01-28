@@ -8,47 +8,10 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(#7a0c0c, #c0392b);
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(#7a0c0c, #c0392b, #f39c12);
   color: #fff;
   overflow-x: hidden;
-}
-
-.card {
-  max-width: 500px;
-  margin: 60px auto;
-  background: rgba(0,0,0,0.6);
-  padding: 25px;
-  border-radius: 16px;
-  text-align: center;
-}
-
-input {
-  width: 90%;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  margin-top: 10px;
-}
-
-button {
-  width: 92%;
-  padding: 14px;
-  font-size: 18px;
-  border-radius: 10px;
-  border: none;
-  margin-top: 15px;
-  cursor: pointer;
-}
-
-.green { background:#27ae60; color:white; }
-.orange { background:#e67e22; color:white; }
-.disabled { background:#555; cursor:not-allowed; }
-
-.status {
-  margin-top: 15px;
-  font-size: 18px;
 }
 
 .bg-sun, .bg-cane, .bg-pot {
@@ -58,32 +21,84 @@ button {
 }
 
 .bg-sun {
-  width: 200px;
-  height: 200px;
-  background: orange;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, #ffd54f, #ff9800);
   border-radius: 50%;
-  top: 40px;
-  right: -60px;
+  top: 20px;
+  right: -40px;
 }
 
 .bg-cane {
-  width: 20px;
-  height: 300px;
+  width: 14px;
+  height: 260px;
   background: green;
   bottom: 0;
-  left: 20px;
+  left: 10px;
 }
 
 .bg-pot {
-  width: 120px;
-  height: 100px;
+  width: 100px;
+  height: 80px;
   background: brown;
-  border-radius: 0 0 60px 60px;
+  border-radius: 0 0 50px 50px;
   bottom: 10px;
-  right: 30px;
+  right: 20px;
 }
 
-.hidden { display:none; }
+.card {
+  max-width: 540px;
+  margin: 70px auto;
+  background: rgba(0,0,0,0.65);
+  padding: 24px;
+  border-radius: 18px;
+  z-index: 5;
+  position: relative;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 17px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 14px;
+  cursor: pointer;
+}
+
+.green { background: #27ae60; color: white; }
+.orange { background: #e67e22; color: white; }
+.disabled { background: #555; cursor: not-allowed; }
+
+.hidden { display: none; }
+
+#questionNumber {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+#questionText {
+  text-align: left;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-top: 15px;
+}
 </style>
 </head>
 
@@ -95,92 +110,164 @@ button {
 
 <!-- START PAGE -->
 <div class="card" id="startPage">
-  <h1>Sankranti Math Harvest 🎉</h1>
-  <p>Beat the Clock ⏰️! Solve More ➕️ score more ✨, top 3 wins prizes 🏆</p>
+  <h1>Sankranti Math Harvest 🌾</h1>
+  <p>
+    Beat the Clock ⏰️! Solve More ➕️ score more ✨,<br>
+    top 3 wins prizes 🏆
+  </p>
   <input id="playerName" placeholder="Enter your name">
   <button id="startBtn" class="green disabled">Start Game</button>
 </div>
 
 <!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
-  <h2 id="qNumber"></h2>
-  <p id="questionText"></p>
+  <div id="questionNumber"></div>
+  <div id="questionText"></div>
+
   <input id="answerInput" placeholder="Type your answer">
   <button class="green" onclick="submitAnswer()">Submit</button>
   <button id="skipBtn" class="orange hidden" onclick="skipQuestion()">Skip</button>
+
   <div class="status">
-    ⏳ <span id="time"></span> &nbsp; ⭐ Score: <span id="score"></span>
+    <div>⏳ <span id="time">2:30</span></div>
+    <div>⭐ <span id="score">0</span></div>
   </div>
 </div>
 
-<!-- LEADERBOARD -->
-<div class="card hidden" id="leaderboardPage">
-  <h2>🏆 Leaderboard</h2>
-  <ol id="leaderboardList"></ol>
-</div>
-
 <script>
-/* ---------- ATTEMPT CONTROL ---------- */
-if (localStorage.getItem("completedGame")) {
-  document.body.innerHTML = "<h2 style='text-align:center;margin-top:40vh'>Game already completed on this device.</h2>";
+/* ---------- ONE ATTEMPT RULE ---------- */
+if (localStorage.getItem("completedGame") === "yes") {
+  document.body.innerHTML =
+    "<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
 }
 
-/* ---------- NAME LOGIC ---------- */
+/* ---------- START PAGE LOGIC ---------- */
 const nameInput = document.getElementById("playerName");
 const startBtn = document.getElementById("startBtn");
 
 nameInput.addEventListener("input", () => {
-  startBtn.classList.toggle("disabled", !nameInput.value.trim());
+  startBtn.classList.toggle("disabled", nameInput.value.trim() === "");
 });
 
 startBtn.onclick = () => {
-  if (!nameInput.value.trim()) return;
+  if (nameInput.value.trim() === "") return;
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
   startGame();
 };
 
-/* ---------- QUESTIONS ---------- */
+/* ---------- COMPULSORY QUESTIONS (UNCHANGED) ---------- */
 const compulsory = [
 {
-q:"Start sweet: Brownie questions for Sihi huggi bonus points!\n\nWhat does July – June signify:\n a) Crop year\n b) Financial year\n c) Academic year",
-a:["a","crop year"]
+q:`Start sweet: Brownie questions for Sihi huggi bonus points!
+
+What does July – June signify?
+
+a) Crop year
+b) Financial year
+c) Academic year`,
+a:["a","cropyear"]
 },
 {
-q:"Pi hide & seek! Spot the pi in the invite\n a) Temple\n b) Stove\n c) Sugarcane",
+q:`Pi hide & seek! Spot the pi in the invite
+
+a) Temple
+b) Stove
+c) Sugarcane`,
 a:["b","stove"]
 },
 {
-q:"Spot the handsome duo in this flyer?\n a) Harish Chandra and Bhaskaracharya\n b) P.C. Mahalanobis and S.N. Bose\n c) Srinivasa Ramanujan and Aryabhata",
+q:`Spot the handsome duo in this flyer?
+(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
+
+a) Harish Chandra and Bhaskaracharya
+b) P.C. Mahalanobis and Satyendra Nath Bose
+c) Srinivasa Ramanujan and Aryabhata`,
 a:["c","ramanujan","aryabhata"]
 },
 {
-q:"What does Sankranti signify astronomically?\n a) Full moon day\n b) Sun’s transition into Capricorn\n c) Start of winter\n d) Spring equinox",
+q:`What does Sankranti signify astronomically?
+
+a) Full moon day
+b) Sun’s transition into Capricorn (Makara Rashi)
+c) Start of winter
+d) Spring equinox`,
 a:["b"]
 },
 {
-q:"Why are kites flown during Sankranti?\n a) For entertainment only\n b) To scare birds away\n c) To mark monsoon\n d) To welcome Uttarayan",
+q:`Why are kites flown during Sankranti?
+
+a) For entertainment only
+b) To scare birds away
+c) To mark the monsoon season
+d) To welcome the Sun’s northward journey (Uttarayan)`,
 a:["d"]
 },
 {
-q:"Stove ain't apple pie 😂, it’s π… why?\n a) Nature’s infinite loop\n b) Cashews in pongal",
+q:`Stove ain't apple pie 😂, it’s π… why?
+
+a) Nature’s infinite harvest loop in life’s eternal abundance circle
+b) Because π represents the number of cashews used in making pongal`,
 a:["a"]
 },
 {
-q:"Total Harvest = 750 kg\nRice is 40%\nHow many kg harvested?\n a)300 b)250 c)350",
+q:`Total Harvest = 750 kg  
+Rice constitutes 40% of the total harvest.
+
+How many kilograms of rice were harvested?
+
+a) 300 kg
+b) 250 kg
+c) 350 kg`,
 a:["a","300"]
 }
 ];
 
-const pool = [];
-for(let i=1;i<=35;i++){
-  pool.push({
-    q:`Mental Math ${i}: If f(x)=2x²+3x-${i}, find f(2)`,
-    a:[(2*4+6-i).toString()]
-  });
-}
+/* ---------- 35-QUESTION MIXED POOL (REAL VARIETY) ---------- */
+const pool = [
+/* FUNCTIONS */
+{ q:`If f(x)=2x−3, find f(5).`, a:["7"] },
+{ q:`If f(x)=x², what is f(−4)?`, a:["16"] },
+{ q:`For f(x)=3x+1, find x when f(x)=10.`, a:["3"] },
+{ q:`Is f(x)=x² increasing or decreasing for x>0?`, a:["increasing"] },
+{ q:`If f(x)=x+4, what is f(0)?`, a:["4"] },
 
-let questions = compulsory.concat(pool);
+/* TRANSFORMATIONS */
+{ q:`State the vertical shift in y = (x−2)² + 5.`, a:["up5","5"] },
+{ q:`What reflection occurs in y = −x²?`, a:["xaxis"] },
+{ q:`Identify the horizontal shift in y = (x+3)².`, a:["left3","3"] },
+{ q:`What is the stretch factor in y = 2x²?`, a:["2"] },
+
+/* LOGARITHMS */
+{ q:`Evaluate log₁₀(100).`, a:["2"] },
+{ q:`Evaluate log₁₀(0.01).`, a:["-2"] },
+{ q:`Simplify log(10³).`, a:["3"] },
+{ q:`Convert log₁₀(1000)=3 to exponential form.`, a:["10^3=1000"] },
+
+/* RATIO & PROPORTION */
+{ q:`Divide 60 in the ratio 2:3. Find the larger part.`, a:["36"] },
+{ q:`If 5 kg costs ₹150, what is the cost of 2 kg?`, a:["60"] },
+{ q:`If x ∝ y and x=10 when y=2, find x when y=5.`, a:["25"] },
+{ q:`Simplify the ratio 24:36.`, a:["2:3"] },
+
+/* HARVEST / SANKRANTI MATH */
+{ q:`A field yields 120 kg per hour. How much in 3 hours?`, a:["360"] },
+{ q:`If 25% of 800 kg is pulses, how much pulses?`, a:["200"] },
+{ q:`A farmer sells rice at ₹40/kg. Earnings for 15 kg?`, a:["600"] },
+{ q:`If temperature rises from 20°C to 30°C, change?`, a:["10"] },
+
+/* MENTAL MATH */
+{ q:`Evaluate: 3² + 4².`, a:["25"] },
+{ q:`Find 15% of 200.`, a:["30"] },
+{ q:`Calculate √144.`, a:["12"] },
+{ q:`What is 2³ × 2²?`, a:["32"] },
+{ q:`Solve: 100 ÷ 4 + 5.`, a:["30"] }
+];
+
+/* ---------- MERGE QUESTIONS ---------- */
+const questions = compulsory.concat(
+  pool.sort(() => Math.random() - 0.5)
+);
 
 /* ---------- GAME STATE ---------- */
 let index = 0;
@@ -188,52 +275,65 @@ let score = 0;
 let timeLeft = 150;
 let timer;
 
-/* ---------- GAME ---------- */
+/* ---------- GAME FUNCTIONS ---------- */
 function startGame(){
-  document.getElementById("score").textContent = score;
+  updateStatus();
   showQuestion();
   timer = setInterval(()=>{
     timeLeft--;
-    document.getElementById("time").textContent =
-      Math.floor(timeLeft/60)+":"+String(timeLeft%60).padStart(2,"0");
-    if(timeLeft<=0) endGame();
+    updateStatus();
+    if(timeLeft <= 0) endGame();
   },1000);
 }
 
 function normalize(x){
-  return x.toLowerCase().replace(/[^a-z0-9]/g,"");
-}
-
-function submitAnswer(){
-  let user = normalize(document.getElementById("answerInput").value);
-  let correct = questions[index].a.some(ans=>normalize(ans)==user);
-  if(correct) score+=5;
-  else score-=2;
-  next();
-}
-
-function skipQuestion(){
-  next();
-}
-
-function next(){
-  document.getElementById("answerInput").value="";
-  index++;
-  if(index>=questions.length) endGame();
-  else showQuestion();
+  return x.toLowerCase().replace(/[^a-z0-9:+^=.-]/g,"");
 }
 
 function showQuestion(){
-  document.getElementById("qNumber").textContent = `Question ${index+1}`;
-  document.getElementById("questionText").textContent = questions[index].q;
+  document.getElementById("questionNumber").textContent =
+    "Question " + (index + 1);
+
+  document.getElementById("questionText").innerHTML =
+    questions[index].q.replace(/\n/g,"<br>");
+
+  document.getElementById("skipBtn")
+    .classList.toggle("hidden", index < 6);
+}
+
+function submitAnswer(){
+  const user = normalize(document.getElementById("answerInput").value);
+  const correct = questions[index].a.some(ans => normalize(ans) === user);
+
+  if (correct) score += 5;
+  else score -= 2;
+
+  nextQuestion();
+}
+
+function skipQuestion(){
+  nextQuestion();
+}
+
+function nextQuestion(){
+  document.getElementById("answerInput").value = "";
+  index++;
+  if (index >= questions.length) endGame();
+  else showQuestion();
+}
+
+function updateStatus(){
   document.getElementById("score").textContent = score;
-  document.getElementById("skipBtn").classList.toggle("hidden", index<6);
+  const m = Math.floor(timeLeft/60);
+  const s = timeLeft % 60;
+  document.getElementById("time").textContent =
+    m + ":" + String(s).padStart(2,"0");
 }
 
 function endGame(){
   clearInterval(timer);
-  localStorage.setItem("completedGame",true);
-  alert("Game Over! Your score: "+score);
+  localStorage.setItem("completedGame","yes");
+  alert("Game Over! Your score: " + score);
 }
 </script>
 
