@@ -268,7 +268,6 @@ let gameEnded = false;
 function startGame(){
   showQuestion();
   updateStatus();
-  // REPLACED TIMER BLOCK
   timer = setInterval(() => {
     timeLeft--;
     updateStatus();
@@ -319,7 +318,7 @@ function updateStatus(){
 }
 
 async function endGame(){
-  // REPLACED START OF ENDGAME
+  alert("END GAME TRIGGERED");
   if(gameEnded) return;
   gameEnded = true;
 
