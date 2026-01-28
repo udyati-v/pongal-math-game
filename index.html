@@ -1,117 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Pongal Math Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
+  authDomain: "pongal-math-game.firebaseapp.com",
+  projectId: "pongal-math-game",
+  storageBucket: "pongal-math-game.firebasestorage.app",
+  messagingSenderId: "656858683321",
+  appId: "1:656858683321:web:dc3f28c9c92e3394778868"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.db = db;
+window.addDoc = addDoc;
+window.collection = collection;
+window.getDocs = getDocs;
+window.query = query;
+window.orderBy = orderBy;
+window.limit = limit;
+</script>
 
 <style>
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(#7a1e00, #f6b35b);
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(#7b1e00, #ffb347);
   overflow-x: hidden;
-  color: #fff;
+  color: white;
 }
 
-/* ---------- BACKGROUND ANIMATIONS ---------- */
+/* BACKGROUND ANIMATIONS */
 .sun {
   position: fixed;
-  top: 10%;
-  right: 10%;
+  top: 20px;
+  right: 20px;
   width: 120px;
   height: 120px;
-  background: orange;
+  background: radial-gradient(circle, #ffd700, #ff8c00);
   border-radius: 50%;
-  animation: float 6s infinite alternate;
-  z-index: 0;
+  opacity: 0.3;
 }
 
 .sugarcane {
   position: fixed;
+  left: 10px;
   bottom: 0;
-  left: 5%;
-  width: 20px;
-  height: 200px;
+  width: 15px;
+  height: 300px;
   background: green;
-  z-index: 0;
 }
 
 .pot {
   position: fixed;
-  bottom: 0;
-  right: 10%;
-  width: 100px;
-  height: 80px;
-  background: maroon;
-  border-radius: 0 0 50px 50px;
-  z-index: 0;
+  right: 30px;
+  bottom: 20px;
+  width: 80px;
+  height: 60px;
+  background: #8b0000;
+  border-radius: 0 0 40px 40px;
 }
 
-@keyframes float {
-  from { transform: translateY(0); }
-  to { transform: translateY(-20px); }
-}
-
-/* ---------- CARD ---------- */
 .card {
-  position: relative;
-  z-index: 5;
-  max-width: 500px;
+  max-width: 420px;
   margin: 80px auto;
-  background: rgba(0,0,0,0.75);
-  padding: 25px;
+  background: rgba(0,0,0,0.5);
+  padding: 20px;
   border-radius: 15px;
-  text-align: center;
-}
-
-input {
-  width: 90%;
-  padding: 10px;
-  margin: 10px 0;
-  font-size: 16px;
 }
 
 button {
-  width: 90%;
+  width: 100%;
   padding: 12px;
-  margin: 10px 0;
+  margin-top: 10px;
   font-size: 16px;
   border: none;
   border-radius: 8px;
 }
 
-.start-btn {
-  background: #2ecc71;
-  color: #000;
-}
+.green { background: #1db954; color: white; }
+.orange { background: #e67e22; color: white; }
 
-.submit-btn {
-  background: #2ecc71;
-}
-
-.skip-btn {
-  background: #e67e22;
-}
-
-button:disabled {
-  opacity: 0.5;
-}
-
-/* ---------- LEADERBOARD ---------- */
-table {
+input {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
 }
 
-th, td {
-  border-bottom: 1px solid #aaa;
-  padding: 8px;
+.hidden { display: none; }
+
+#questionText {
+  text-align: left;
+  line-height: 1.6;
+}
+
+.leaderboard-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
 }
 </style>
 </head>
@@ -123,150 +121,150 @@ th, td {
 <div class="pot"></div>
 
 <!-- START PAGE -->
-<div class="card" id="startPage">
-  <h2>Pongal Math Challenge 🎉</h2>
+<div id="startPage" class="card">
+  <h2>Pongal Math Harvest 🌾</h2>
   <p><b>Beat the Clock ⏰️! Solve More ➕️ score more ✨️, top 3 wins prizes 🏆</b></p>
-  <input id="playerName" placeholder="Enter your name">
-  <button class="start-btn" id="startBtn" disabled>Start Game</button>
+  <input id="nameInput" placeholder="Enter your name">
+  <button id="startBtn" class="green" disabled>Start Game</button>
 </div>
 
 <!-- GAME PAGE -->
-<div class="card" id="gamePage" style="display:none;">
-  <h3 id="qCount"></h3>
-  <p id="questionText"></p>
+<div id="gamePage" class="card hidden">
+  <h3 id="qNumber"></h3>
+  <div id="questionText"></div>
+
   <input id="answerInput" placeholder="Type your answer">
-  <button class="submit-btn" onclick="submitAnswer()">Submit</button>
-  <button class="skip-btn" id="skipBtn" onclick="skipQuestion()" style="display:none;">Skip</button>
-  <p>⏳ Time: <span id="time"></span></p>
-  <p>⭐ Score: <span id="score"></span></p>
+  <button class="green" onclick="submitAnswer()">Submit</button>
+  <button id="skipBtn" class="orange hidden" onclick="skipQuestion()">Skip</button>
+
+  <p>⏳ Time: <span id="time">02:30</span></p>
+  <p>⭐ Score: <span id="score">0</span></p>
 </div>
 
 <!-- LEADERBOARD PAGE -->
-<div class="card" id="leaderboardPage" style="display:none;">
-  <h2>🏆 Leaderboard</h2>
-  <table>
-    <thead>
-      <tr><th>Rank</th><th>Name</th><th>Score</th></tr>
-    </thead>
-    <tbody id="leaderboardBody"></tbody>
-  </table>
+<div id="leaderboardPage" class="card hidden">
+  <h2>🏆 Leaderboard (Top 10)</h2>
+  <div id="leaderboard"></div>
 </div>
 
 <script>
-/* ---------- FIREBASE ---------- */
-const firebaseConfig = {
-  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
-  authDomain: "pongal-math-game.firebaseapp.com",
-  projectId: "pongal-math-game"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+/* ===== GAME LOGIC ===== */
 
-/* ---------- STATE ---------- */
-let playerName = "";
-let score = 0;
-let timeLeft = 150;
-let timer;
-let qIndex = 0;
-let completed = localStorage.getItem("completed");
-
-/* ---------- QUESTIONS (COMPULSORY ONLY SHOWN HERE FOR BREVITY) ---------- */
 const compulsory = [
-{
-text:`Start sweet: Brownie questions for Sihi huggi bonus points!
+`Start sweet: Brownie questions for Sihi huggi bonus points!
 
 What does July – June signify:
 a) Crop year
 b) Financial year
 c) Academic year`,
-answer:"a"
-},
-{
-text:`Pi hide & seek! Spot the pi in the invite
+
+`Pi hide & seek! Spot the pi in the invite
 a) Temple
 b) Stove
 c) Sugarcane`,
-answer:"b"
-}
+
+`Spot the handsome duo in this flyer?
+(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
+a) Harish Chandra and Bhaskaracharya
+b) P.C. Mahalanobis and Satyendra Nath Bose
+c) Srinivasa Ramanujan and Aryabhata`,
+
+`What does Sankranti signify astronomically?
+a) Full moon day
+b) Sun’s transition into Capricorn (Makara Rashi)
+c) Start of winter
+d) Spring equinox`,
+
+`Why are kites flown during Sankranti?
+a) For entertainment only
+b) To scare birds away
+c) To mark the monsoon season
+d) To welcome the Sun’s northward journey (Uttarayan)`,
+
+`Stove ain't apple pie 😂, it’s π… why?
+a) Nature’s infinite harvest loop in life’s eternal abundance circle
+b) Because π represents the number of cashews used in making pongal`,
+
+`Total Harvest = 750 kg
+Rice constitutes 40% of the total harvest.
+How many kilograms of rice were harvested?
+a) 300 kg
+b) 250 kg
+c) 350 kg`
 ];
 
-/* ---------- START BUTTON ENABLE ---------- */
-document.getElementById("playerName").addEventListener("input", e=>{
+const answers = ["a","b","c","b","d","a","a"];
+
+let index = 0;
+let score = 0;
+let timeLeft = 150;
+let timer;
+let playerName = "";
+
+document.getElementById("nameInput").addEventListener("input", e=>{
   document.getElementById("startBtn").disabled = e.target.value.trim()==="";
 });
 
-/* ---------- START GAME ---------- */
 document.getElementById("startBtn").onclick = ()=>{
-  if(completed){
-    alert("You have already completed the game.");
-    return;
-  }
-  playerName = document.getElementById("playerName").value.trim();
-  document.getElementById("startPage").style.display="none";
-  document.getElementById("gamePage").style.display="block";
+  playerName = nameInput.value.trim();
+  startPage.classList.add("hidden");
+  gamePage.classList.remove("hidden");
   startTimer();
   loadQuestion();
 };
 
-/* ---------- TIMER ---------- */
 function startTimer(){
   timer = setInterval(()=>{
     timeLeft--;
     let m = Math.floor(timeLeft/60);
     let s = timeLeft%60;
-    document.getElementById("time").textContent = `${m}:${s.toString().padStart(2,"0")}`;
+    time.textContent = `${m}:${s.toString().padStart(2,"0")}`;
     if(timeLeft<=0) endGame();
   },1000);
 }
 
-/* ---------- QUESTIONS ---------- */
 function loadQuestion(){
-  if(qIndex>=compulsory.length){
-    endGame();
-    return;
-  }
-  document.getElementById("qCount").textContent = `Question ${qIndex+1}`;
-  document.getElementById("questionText").textContent = compulsory[qIndex].text;
-  document.getElementById("answerInput").value="";
-  document.getElementById("score").textContent = score;
+  qNumber.textContent = `Question ${index+1}`;
+  questionText.innerHTML = compulsory[index].replace(/\n/g,"<br>");
+  skipBtn.classList.toggle("hidden", index<6);
 }
 
-/* ---------- ANSWER ---------- */
 function submitAnswer(){
-  let ans = document.getElementById("answerInput").value.trim().toLowerCase();
-  if(ans === compulsory[qIndex].answer){
-    score += 5;
-  } else {
-    score -= 2;
-  }
-  qIndex++;
-  loadQuestion();
+  let user = answerInput.value.trim().toLowerCase();
+  if(user===answers[index]) score+=5;
+  else score-=2;
+  scoreSpan.textContent = score;
+  next();
 }
 
-/* ---------- END GAME ---------- */
-function endGame(){
+function skipQuestion(){ next(); }
+
+function next(){
+  answerInput.value="";
+  index++;
+  if(index>=compulsory.length) endGame();
+  else loadQuestion();
+}
+
+async function endGame(){
   clearInterval(timer);
-  localStorage.setItem("completed", "yes");
-  db.collection("scores").add({ name: playerName, score });
-  document.getElementById("gamePage").style.display="none";
-  document.getElementById("leaderboardPage").style.display="block";
-  loadLeaderboard();
+  await addDoc(collection(db,"scores"),{name:playerName,score});
+  showLeaderboard();
 }
 
-/* ---------- LEADERBOARD ---------- */
-function loadLeaderboard(){
-  db.collection("scores").orderBy("score","desc").limit(10).get().then(snap=>{
-    let html="";
-    let rank=1;
-    snap.forEach(doc=>{
-      let medal = rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":"";
-      html += `<tr><td>${rank} ${medal}</td><td>${doc.data().name}</td><td>${doc.data().score}</td></tr>`;
-      rank++;
-    });
-    document.getElementById("leaderboardBody").innerHTML = html;
+async function showLeaderboard(){
+  gamePage.classList.add("hidden");
+  leaderboardPage.classList.remove("hidden");
+  const q = query(collection(db,"scores"),orderBy("score","desc"),limit(10));
+  const snap = await getDocs(q);
+  leaderboard.innerHTML="";
+  let i=1;
+  snap.forEach(d=>{
+    let medal = i==1?"🥇":i==2?"🥈":i==3?"🥉":"";
+    leaderboard.innerHTML+=`<div class="leaderboard-row">${medal} ${i}. ${d.data().name} <span>${d.data().score}</span></div>`;
+    i++;
   });
 }
 </script>
-
 </body>
 </html>
