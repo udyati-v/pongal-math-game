@@ -36,13 +36,13 @@
             width: 92%;
             max-width: 520px;
             margin: 40px auto;
-            background: rgba(0, 0, 0, 0.88);
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(15px);
             padding: 25px;
             border-radius: 24px;
             position: relative;
             z-index: 10;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 50px rgba(0,0,0,0.7);
             text-align: center;
             border: 1px solid rgba(255,255,255,0.1);
         }
@@ -134,7 +134,7 @@
 
     <input type="text" id="answerInput" placeholder="Type answer or option (a, b, c...)" autocomplete="off">
     <button class="btn-green" id="submitBtn">Submit Answer</button>
-    <button class="btn-orange hidden" id="skipBtn">Skip</button>
+    <button class="btn-orange hidden" id="skipBtn">Skip Question</button>
 
     <div class="status-bar">
         <span>⏳ <span id="timerDisplay">2:00</span></span>
@@ -144,7 +144,7 @@
 
 <div class="card hidden" id="leaderboardPage">
     <h1>🏆 Leaderboard</h1>
-    <div id="leaderboardList">Calculating results...</div>
+    <div id="leaderboardList">Calculating Harvest Results...</div>
 </div>
 
 <script>
@@ -205,9 +205,11 @@ let score = 0;
 let timeLeft = 120; 
 let timerInterval;
 let questions = [];
+let gameEnded = false;
 
+// Attempt check
 if(localStorage.getItem("sankranti_attempt") === "done") {
-    document.body.innerHTML = "<div class='card'><h1>Harvest Finished</h1><p>You have already completed your attempt.</p></div>";
+    document.body.innerHTML = "<div class='card'><h1>Harvest Finished</h1><p>You have already completed your attempt on this device.</p></div>";
 }
 
 document.getElementById('playerName').oninput = function() {
@@ -229,18 +231,27 @@ function startTimer() {
         let mins = Math.floor(timeLeft / 60);
         let secs = timeLeft % 60;
         document.getElementById('timerDisplay').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
-        if(timeLeft <= 0) endGame();
+        
+        if(timeLeft <= 0) {
+            endGame();
+        }
     }, 1000);
 }
 
 function showQuestion() {
     if(currentIndex >= questions.length) return endGame();
+    
     const currentQ = questions[currentIndex];
     document.getElementById('qNumber').innerText = `Question ${currentIndex + 1}`;
     document.getElementById('questionText').innerText = currentQ.q;
     document.getElementById('answerInput').value = "";
+    document.getElementById('answerInput').focus();
+    
+    // Brownie message on Q1 only
     document.getElementById('brownieMessage').classList.toggle('hidden', currentIndex !== 0);
-    document.getElementById('skipBtn').classList.toggle('hidden', currentIndex < 7);
+    
+    // Skip rule: show ONLY starting from Question 7 (index 6)
+    document.getElementById('skipBtn').classList.toggle('hidden', currentIndex < 6);
 }
 
 function normalize(str) {
@@ -251,46 +262,77 @@ document.getElementById('submitBtn').onclick = submitAnswer;
 document.getElementById('answerInput').onkeypress = (e) => { if(e.key === 'Enter') submitAnswer(); };
 
 function submitAnswer() {
+    if(gameEnded) return;
     const rawVal = document.getElementById('answerInput').value;
     if(!rawVal.trim()) return;
+
     const userVal = normalize(rawVal);
-    const isCorrect = questions[currentIndex].a.some(ans => normalize(ans) === userVal);
-    if(isCorrect) score += 10; else score -= 2;
+    const correctAnswers = questions[currentIndex].a;
+    const isCorrect = correctAnswers.some(ans => normalize(ans) === userVal);
+
+    if(isCorrect) score += 10;
+    else score -= 2;
+
     document.getElementById('scoreDisplay').innerText = score;
     currentIndex++;
     showQuestion();
 }
 
+// Skip logic: moves to next question, no score change
 document.getElementById('skipBtn').onclick = function() {
+    if(gameEnded) return;
     currentIndex++;
     showQuestion();
 };
 
 async function endGame() {
+    if(gameEnded) return;
+    gameEnded = true;
     clearInterval(timerInterval);
+    
+    // Lock attempt
     localStorage.setItem("sankranti_attempt", "done");
+    
     document.getElementById('gamePage').classList.add('hidden');
     document.getElementById('leaderboardPage').classList.remove('hidden');
+    
     const name = document.getElementById('playerName').value.trim();
+
     try {
-        await db.collection("leaderboard").add({ name, score, time: Date.now() });
+        await db.collection("leaderboard").add({
+            name: name,
+            score: score,
+            time: Date.now()
+        });
         showLeaderboard();
-    } catch(e) { document.getElementById('leaderboardList').innerText = "Score saved."; }
+    } catch(e) {
+        document.getElementById('leaderboardList').innerText = "Score saved locally. Sync error.";
+    }
 }
 
 async function showLeaderboard() {
     const list = document.getElementById('leaderboardList');
     try {
-        const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(10).get();
-        let html = ""; let rank = 1;
+        const snap = await db.collection("leaderboard")
+            .orderBy("score", "desc")
+            .limit(10)
+            .get();
+
+        let html = "";
+        let rank = 1;
         snap.forEach(doc => {
             const d = doc.data();
             const medal = rank===1 ? "🥇" : rank===2 ? "🥈" : rank===3 ? "🥉" : "";
-            html += `<div class="leader-row"><span><b>${rank}.</b> ${d.name} ${medal}</span><span style="color:var(--accent)">${d.score}</span></div>`;
+            html += `<div class="leader-row">
+                        <span><b>${rank}.</b> ${d.name} ${medal}</span>
+                        <span style="color:var(--accent)">${d.score}</span>
+                     </div>`;
             rank++;
         });
         list.innerHTML = html;
-    } catch(e) { list.innerHTML = "Leaderboard error."; }
+    } catch(e) {
+        list.innerHTML = "Leaderboard error.";
+    }
 }
 </script>
 </body>
