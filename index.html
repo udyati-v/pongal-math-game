@@ -268,12 +268,12 @@ let gameEnded = false;
 function startGame(){
   showQuestion();
   updateStatus();
+  // REPLACED TIMER BLOCK
   timer = setInterval(() => {
-    if (gameEnded) return;
     timeLeft--;
     updateStatus();
+
     if (timeLeft <= 0) {
-      gameEnded = true;
       clearInterval(timer);
       endGame();
     }
@@ -308,8 +308,6 @@ function nextQuestion(){
   answerInput.value="";
   index++;
   if(index>=questions.length){
-    gameEnded = true;
-    clearInterval(timer);
     endGame();
   }
   else showQuestion();
@@ -321,7 +319,10 @@ function updateStatus(){
 }
 
 async function endGame(){
-  if(gameEnded !== true) gameEnded = true;
+  // REPLACED START OF ENDGAME
+  if(gameEnded) return;
+  gameEnded = true;
+
   clearInterval(timer);
   localStorage.setItem("completedGame","yes");
 
