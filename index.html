@@ -318,38 +318,48 @@ function updateStatus(){
 }
 
 async function endGame(){
-  alert("END GAME TRIGGERED");
   if(gameEnded) return;
   gameEnded = true;
 
   clearInterval(timer);
-  localStorage.setItem("completedGame","yes");
 
-  await db.collection("leaderboard").add({
-    name:nameInput.value,
-    score:score,
-    time:Date.now()
-  });
-
-  const snap=await db.collection("leaderboard")
-    .orderBy("score","desc")
-    .orderBy("time","asc")
-    .limit(10).get();
-
+  // ✅ FORCE UI CHANGE FIRST
   gamePage.classList.add("hidden");
   leaderboardPage.classList.remove("hidden");
-  leaderboard.innerHTML="";
+  leaderboard.innerHTML = "<p>Loading leaderboard...</p>";
 
-  let r=1;
-  snap.forEach(d=>{
-    const x=d.data();
-    leaderboard.innerHTML+=`
-    <div class="leader">
-      <span>${r}. ${x.name} ${r<=3?["🥇","🥈","🥉"][r-1]:""}</span>
-      <span>${x.score}</span>
-    </div>`;
-    r++;
-  });
+  localStorage.setItem("completedGame","yes");
+
+  try {
+    await db.collection("leaderboard").add({
+      name: nameInput.value,
+      score: score,
+      time: Date.now()
+    });
+
+    const snap = await db.collection("leaderboard")
+      .orderBy("score","desc")
+      .orderBy("time","asc")
+      .limit(10)
+      .get();
+
+    leaderboard.innerHTML = "";
+    let r = 1;
+
+    snap.forEach(d=>{
+      const x = d.data();
+      leaderboard.innerHTML += `
+        <div class="leader">
+          <span>${r}. ${x.name} ${r<=3?["🥇","🥈","🥉"][r-1]:""}</span>
+          <span>${x.score}</span>
+        </div>`;
+      r++;
+    });
+
+  } catch (e) {
+    leaderboard.innerHTML = "<p>Error loading leaderboard</p>";
+    console.error(e);
+  }
 }
 </script>
 </body>
