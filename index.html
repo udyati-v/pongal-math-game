@@ -2,308 +2,263 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pongal Math Harvest</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pongal Math Game</title>
 
 <style>
 body{
   margin:0;
-  font-family:Segoe UI, sans-serif;
-  background:linear-gradient(135deg,#f7c873,#f4a261);
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(180deg,#ffb347,#ffcc33);
+  overflow:hidden;
 }
+
+/* ===== BACKGROUND ANIMATIONS ===== */
+.sun{
+  position:fixed;
+  top:40px;
+  right:40px;
+  width:120px;
+  height:120px;
+  background:#ffd700;
+  border-radius:50%;
+  animation: glow 4s infinite alternate;
+}
+@keyframes glow{
+  from{box-shadow:0 0 20px #ffd700;}
+  to{box-shadow:0 0 50px #ff9900;}
+}
+
+.sugarcane{
+  position:fixed;
+  left:10px;
+  bottom:0;
+  width:20px;
+  height:200px;
+  background:green;
+  border-radius:10px;
+}
+
+.pongal{
+  position:fixed;
+  right:30px;
+  bottom:20px;
+  width:80px;
+  height:60px;
+  background:#8b4513;
+  border-radius:0 0 40px 40px;
+}
+.pongal::before{
+  content:"";
+  position:absolute;
+  top:-25px;
+  left:0;
+  width:80px;
+  height:25px;
+  background:#ccc;
+  border-radius:40px;
+}
+
+/* ===== CARD ===== */
 .card{
-  background:#fff3e0;
-  width:92%;
   max-width:500px;
-  padding:22px;
-  border-radius:16px;
-  box-shadow:0 12px 30px rgba(0,0,0,0.25);
+  margin:80px auto;
+  background:#fff3e0;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  text-align:center;
 }
-h1,h2{text-align:center}
-.subtitle{text-align:center;font-weight:600;margin-bottom:14px}
-.question{white-space:pre-line;line-height:1.5;margin:10px 0}
-input,button{
+
+input{
+  width:100%;
+  padding:12px;
+  font-size:16px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+button{
   width:100%;
   padding:12px;
   margin-top:10px;
   font-size:16px;
-  border-radius:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
 }
-button{border:none;cursor:pointer}
-.submit{background:#2ecc71;color:white}
-.skip{background:#e67e22;color:white}
-.info{display:flex;justify-content:space-between;margin-top:12px;font-weight:bold}
-.hidden{display:none}
+
+.submit{background:#2ecc71;color:white;}
+.skip{background:#e67e22;color:white;}
+
+.footer{
+  margin-top:15px;
+  font-weight:bold;
+}
 </style>
 </head>
 
 <body>
 
-<div class="card" id="startScreen">
-  <h1>🌾 Pongal Math Harvest ☀️</h1>
-  <p class="subtitle">
-    Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️
-  </p>
-  <input id="playerName" placeholder="Enter your name">
-  <button class="submit" onclick="startGame()">Start Game</button>
-</div>
+<div class="sun"></div>
+<div class="sugarcane"></div>
+<div class="pongal"></div>
 
-<div class="card hidden" id="gameScreen">
-  <h2 id="qNo"></h2>
-  <div id="introText"></div>
-  <div class="question" id="questionText"></div>
+<!-- ================= GAME SCREEN ================= -->
+<div id="gameScreen" class="card">
+  <h2 id="qCount"></h2>
+  <p id="questionText"></p>
 
-  <input id="answerInput" placeholder="Type your answer">
+  <input id="answer" placeholder="Type your answer">
   <button class="submit" onclick="submitAnswer()">Submit</button>
-  <button class="skip hidden" id="skipBtn" onclick="skipQuestion()">Skip</button>
+  <button id="skipBtn" class="skip" onclick="skipQuestion()" style="display:none">Skip</button>
 
-  <div class="info">
-    <div>⏳ Time: <span id="time"></span></div>
-    <div>⭐ Score: <span id="score">0</span></div>
+  <div class="footer">
+    ⏳ Time: <span id="time"></span><br>
+    ⭐ Score: <span id="score">0</span>
   </div>
 </div>
 
-<div class="card hidden" id="endScreen">
-  <h2>Game Over 🎉</h2>
-  <p style="text-align:center;font-size:18px">
-    Final Score: <b><span id="finalScore"></span></b>
-  </p>
-  <p style="text-align:center;font-size:14px">
-    You have completed the game. Replay is not allowed on this device.
-  </p>
+<!-- ================= LEADERBOARD SCREEN ================= -->
+<div id="leaderboardScreen" class="card" style="display:none">
+  <h2>🏆 Leaderboard</h2>
+  <p>Top 10 Pongal Math Champions</p>
+  <ol id="leaderboardList"></ol>
 </div>
 
-<script>
-/* ---------- BLOCK REPLAY AFTER COMPLETION ---------- */
-if (localStorage.getItem("pongal_completed")) {
-  document.body.innerHTML = `
-    <h2 style="text-align:center;margin-top:40px">
-      ❌ You have already completed this game on this device.
-    </h2>`;
+<!-- ================= FIREBASE ================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
+  authDomain: "pongal-math-game.firebaseapp.com",
+  projectId: "pongal-math-game",
+  storageBucket: "pongal-math-game.firebasestorage.app",
+  messagingSenderId: "656858683321",
+  appId: "1:656858683321:web:dc3f28c9c92e3394778868"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ===== ATTEMPT LOGIC ===== */
+if(localStorage.getItem("completed")==="yes"){
+  document.getElementById("gameScreen").innerHTML="<h2>Game already completed</h2>";
 }
 
-/* ---------- TIME FORMAT ---------- */
-function formatTime(t){
-  const m=Math.floor(t/60);
-  const s=t%60;
-  return `${m}:${s<10?"0"+s:s}`;
+/* ===== QUESTIONS ===== */
+const compulsory = [
+{
+text:"Start sweet: Brownie questions for Sihi huggi bonus points!\n\nWhat does July – June signify:\na) Crop year\nb) Financial year\nc) Academic year",
+answer:"a"
+},
+{
+text:"Pi hide & seek! Spot the pi in the invite\na) Temple\nb) Stove\nc) Sugarcane",
+answer:"b"
+},
+{
+text:"Spot the handsome duo in this flyer?\na) Harish Chandra and Bhaskaracharya\nb) P.C. Mahalanobis and S.N. Bose\nc) Srinivasa Ramanujan and Aryabhata",
+answer:"c"
+},
+{
+text:"What does Sankranti signify astronomically?\na) Full moon day\nb) Sun’s transition into Capricorn (Makara Rashi)\nc) Start of winter\nd) Spring equinox",
+answer:"b"
+},
+{
+text:"Why are kites flown during Sankranti?\na) For entertainment only\nb) To scare birds away\nc) To mark monsoon\nd) To welcome Sun’s northward journey",
+answer:"d"
+},
+{
+text:"Stove ain't apple pie 😂, it’s π… why?\na) Nature’s infinite harvest loop\nb) Number of cashews",
+answer:"a"
+},
+{
+text:"Total Harvest = 750 kg, Rice = 40%. How much rice harvested?\na) 300 kg\nb) 250 kg\nc) 350 kg",
+answer:"a"
 }
+];
 
-/* ---------- GAME STATE ---------- */
-let time=150;
-let timer;
-let score=0;
+const pool = [
+{text:"If f(x)=2x²−3x+5, find f(4)",answer:"25"},
+{text:"Solve log₁₀(1000)",answer:"3"},
+{text:"If 3:5 = x:20, find x",answer:"12"},
+{text:"Translate y=x² up by 3 units. New equation?",answer:"y=x^2+3"},
+{text:"If sinθ=1/2, θ in degrees?",answer:"30"},
+{text:"Find slope of line through (2,3) and (6,11)",answer:"2"},
+{text:"Evaluate log₁₀(0.01)",answer:"-2"},
+{text:"If f(x)=x²−1, find f(−3)",answer:"8"},
+{text:"Ratio of 45 to 60 simplified?",answer:"3:4"},
+{text:"If area of square =49, side length?",answer:"7"}
+];
+
+let questions=[...compulsory,...pool.sort(()=>Math.random()-0.5)];
 let index=0;
-let usedPool=[];
+let score=0;
+let timeLeft=150;
+let timer;
 
-/* ---------- COMPULSORY QUESTIONS (VERBATIM) ---------- */
-const compulsory=[
-{
-q:`Question 1  
-What does July – June signify:  
-a) Crop year  
-b) Financial year  
-c) Academic year  
-
-Answer: a  `,
-a:["a","crop year"],
-intro:"Start sweet: Brownie questions for Sihi huggi bonus points!"
-},
-{
-q:`Question 2  
-Pi hide & seek! Spot the pi in the invite   
-a) Temple  
-b) Stove  
-c) Sugarcane   
-
-Answer: b  `,
-a:["b","stove"]
-},
-{
-q:`Question 3  
-Spot the handsome duo in this flyer?   
-(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)  
-a) Harish Chandra and Bhaskaracharya  
-b) P.C. Mahalanobis and Satyendra Nath Bose  
-c) Srinivasa Ramanujan and Aryabhata  
-
-Answer: c  `,
-a:["c","ramanujan","aryabhata"]
-},
-{
-q:`Question 4  
-What does Sankranti signify astronomically?  
-a) Full moon day  
-b) Sun’s transition into Capricorn (Makara Rashi)  
-c) Start of winter  
-d) Spring equinox  
-
-Answer: b  `,
-a:["b","capricorn","makara"]
-},
-{
-q:`Question 5  
-Why are kites flown during Sankranti?  
-a) For entertainment only  
-b) To scare birds away  
-c) To mark the monsoon season  
-d) To welcome the Sun’s northward journey (Uttarayan)  
-
-Answer: d  `,
-a:["d","uttarayan"]
-},
-{
-q:`Question 6  
-Stove ain't apple pie😂, it’s π… why?   
-a)Nature’s infinite harvest loop in life’s eternal abundance circle  
-b)Because π represents the number of cashews used in making pongal  
-
-Answer: a  `,
-a:["a","infinite"]
-},
-{
-q:`Question 7  
-Total Harvest = 750 kg  
-Rice constitutes 40% of the total harvest.  
-How many kilograms of rice were harvested?  
-a) 300 kg  
-b) 250 kg  
-c) 350 kg  
-
-Answer: a  `,
-a:["a","300"]
-}
-];
-
-/* ---------- HARD QUESTION POOL (35, NON-REPEATING TYPES) ---------- */
-const pool=[
-{q:"Evaluate log₁₀(1000)",a:["3"]},
-{q:"If f(x)=3x−4, find f⁻¹(5)",a:["3"]},
-{q:"Simplify: log₁₀(50) − log₁₀(2)",a:["1.4","1.3979","log25"]},
-{q:"If f(x)=x²−1, find f(6)",a:["35"]},
-{q:"Ratio 5:7, total land 24 acres. Larger part?",a:["14"]},
-{q:"Translate y=x² up by 3 units.",a:["x^2+3"]},
-{q:"If 2x+3y=12, find y when x=3",a:["2"]},
-{q:"Evaluate: 2⁴ × 2⁻¹",a:["8"]},
-{q:"Gradient of y=4x−7",a:["4"]},
-{q:"Harvest increases by 20% from 500kg. New harvest?",a:["600"]},
-{q:"Solve: x²−9=0 (positive root)",a:["3"]},
-{q:"Midpoint of (2,4) and (6,8)",a:["4,6"]},
-{q:"Convert 0.375 to fraction",a:["3/8"]},
-{q:"Mean of 2,4,6,8",a:["5"]},
-{q:"Solve: 3x−7=11",a:["6"]},
-{q:"Volume of cube side 4",a:["64"]},
-{q:"Simplify: (x²)³",a:["x^6"]},
-{q:"Distance between (0,0) and (3,4)",a:["5"]},
-{q:"If y∝x, y=10 when x=2. Find y when x=6",a:["30"]},
-{q:"Solve: log₁₀x=1",a:["10"]},
-{q:"Slope between (1,2) and (3,6)",a:["2"]},
-{q:"Simplify √144",a:["12"]},
-{q:"If f(x)=x−2, find f(f(6))",a:["2"]},
-{q:"Area of circle radius 7 (π=22/7)",a:["154"]},
-{q:"Solve: 5x=45",a:["9"]},
-{q:"Convert 20% to fraction",a:["1/5"]},
-{q:"If a:b=4:5 and a=16, find b",a:["20"]},
-{q:"Find x: x/4=5",a:["20"]},
-{q:"Simplify: 2³+3²",a:["17"]},
-{q:"Probability of head in fair coin",a:["1/2"]},
-{q:"If f(x)=x³, find f(2)",a:["8"]},
-{q:"Mean of first 10 natural numbers",a:["5.5"]}
-];
-
-/* ---------- GAME FLOW ---------- */
-function startGame(){
-  if(!playerName.value.trim()) return;
-  startScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
-
-  timeSpan.innerText=formatTime(time);
-  scoreSpan.innerText=score;
-
-  timer=setInterval(()=>{
-    time--;
-    timeSpan.innerText=formatTime(time);
-    if(time<=0) endGame();
-  },1000);
-
-  loadQuestion();
+/* ===== GAME ===== */
+function startTimer(){
+timer=setInterval(()=>{
+  timeLeft--;
+  let m=Math.floor(timeLeft/60);
+  let s=timeLeft%60;
+  document.getElementById("time").innerText=`${m}:${s.toString().padStart(2,"0")}`;
+  if(timeLeft<=0) endGame();
+},1000);
 }
 
-function loadQuestion(){
-  answerInput.value="";
-  introText.innerHTML="";
-
-  if(index < compulsory.length){
-    if(index===0) introText.innerHTML="<b>"+compulsory[0].intro+"</b><br><br>";
-    show(compulsory[index]);
-  }else{
-    let q;
-    do{
-      q=pool[Math.floor(Math.random()*pool.length)];
-    }while(usedPool.includes(q.q));
-    usedPool.push(q.q);
-    show(q);
-  }
-
-  skipBtn.classList.toggle("hidden",index<6);
+function showQuestion(){
+  document.getElementById("qCount").innerText=`Question ${index+1}`;
+  document.getElementById("questionText").innerText=questions[index].text;
+  document.getElementById("answer").value="";
+  document.getElementById("skipBtn").style.display = index>=6 ? "block":"none";
 }
 
-function show(q){
-  qNo.innerText=`Question ${index+1}`;
-  questionText.innerText=q.q;
-}
-
-function submitAnswer(){
-  const ans=answerInput.value.toLowerCase().trim();
-  const current=index<compulsory.length
-    ? compulsory[index]
-    : pool.find(p=>p.q===questionText.innerText);
-
-  if(current.a.some(a=>ans.includes(a))){
-    score+=5;
-  }else{
-    score-=2;
-    if(score<0) score=0;
-  }
-
-  scoreSpan.innerText=score;
+window.submitAnswer=()=>{
+  let user=document.getElementById("answer").value.trim().toLowerCase();
+  if(user==="") return;
+  if(user===questions[index].answer.toLowerCase()) score+=5;
+  else score-=2;
+  document.getElementById("score").innerText=score;
   index++;
-  loadQuestion();
-}
+  index<questions.length ? showQuestion() : endGame();
+};
 
-function skipQuestion(){
+window.skipQuestion=()=>{
   index++;
-  loadQuestion();
-}
+  index<questions.length ? showQuestion() : endGame();
+};
 
-function endGame(){
+async function endGame(){
   clearInterval(timer);
-  localStorage.setItem("pongal_completed","true");
-  gameScreen.classList.add("hidden");
-  endScreen.classList.remove("hidden");
-  finalScore.innerText=score;
+  localStorage.setItem("completed","yes");
+
+  await addDoc(collection(db,"scores"),{
+    score:score,
+    time:new Date()
+  });
+
+  document.getElementById("gameScreen").style.display="none";
+  document.getElementById("leaderboardScreen").style.display="block";
+
+  const q=query(collection(db,"scores"),orderBy("score","desc"),limit(10));
+  const snap=await getDocs(q);
+  let list=document.getElementById("leaderboardList");
+  list.innerHTML="";
+  let r=1;
+  snap.forEach(d=>{
+    let li=document.createElement("li");
+    li.innerHTML=(r==1?"🥇":r==2?"🥈":r==3?"🥉":r+".")+" Score: "+d.data().score;
+    list.appendChild(li);
+    r++;
+  });
 }
 
-/* ---------- ELEMENTS ---------- */
-const startScreen=document.getElementById("startScreen");
-const gameScreen=document.getElementById("gameScreen");
-const endScreen=document.getElementById("endScreen");
-const qNo=document.getElementById("qNo");
-const questionText=document.getElementById("questionText");
-const answerInput=document.getElementById("answerInput");
-const skipBtn=document.getElementById("skipBtn");
-const timeSpan=document.getElementById("time");
-const scoreSpan=document.getElementById("score");
-const introText=document.getElementById("introText");
-const playerName=document.getElementById("playerName");
-const finalScore=document.getElementById("finalScore");
-
-timeSpan.innerText=formatTime(time);
+startTimer();
+showQuestion();
 </script>
-
 </body>
 </html>
