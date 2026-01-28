@@ -5,6 +5,10 @@
 <title>Sankranti Math Harvest</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <style>
 body{
   margin:0;
@@ -17,10 +21,7 @@ body{
   color:#fff;
 }
 
-/* BACKGROUND ELEMENTS */
-.bg-sun,
-.bg-cane,
-.bg-pot{
+.bg-sun,.bg-cane,.bg-pot{
   position:fixed;
   opacity:0.22;
   z-index:0;
@@ -47,7 +48,6 @@ body{
   bottom:-20px;right:-30px;
 }
 
-/* CARD */
 .card{
   max-width:540px;
   width:100%;
@@ -124,13 +124,24 @@ input,button{
 </div>
 
 <script>
-/* ONE ATTEMPT */
+/* FIREBASE INIT */
+firebase.initializeApp({
+  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
+  authDomain: "pongal-math-game.firebaseapp.com",
+  projectId: "pongal-math-game",
+  storageBucket: "pongal-math-game.firebasestorage.app",
+  messagingSenderId: "656858683321",
+  appId: "1:656858683321:web:00532718045127c3778868"
+});
+const db = firebase.firestore();
+
+/* ONE ATTEMPT RULE */
 if(localStorage.getItem("completedGame")==="yes"){
   document.body.innerHTML="<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
 }
 
 /* DOM */
-const startPage=playerName.parentElement;
+const startPage=document.getElementById("startPage");
 const gamePage=document.getElementById("gamePage");
 const leaderboardPage=document.getElementById("leaderboardPage");
 const leaderboard=document.getElementById("leaderboard");
@@ -156,79 +167,121 @@ startBtn.onclick=()=>{
   startGame();
 };
 
-/* QUESTIONS */
-const compulsory=[ /* SAME AS YOU GAVE */ 
-{q:`Start sweet: Brownie questions for Sihi huggi bonus points!
+/* QUESTIONS — REPLACED */
+const compulsory=[
+{
+q:`Start sweet: Brownie questions for Sihi huggi bonus points!
 
 What does July – June signify:
 a) crop year
 b) financial year
-c) academic year`,a:["a","cropyear"]},
-{q:`Pi hide & seek! Spot the pi in the invite
+c) academic year`,
+a:["a","cropyear"]
+},
+{
+q:`Pi hide & seek! Spot the pi in the invite
 a) Temple
 b) Stove
-c) Sugarcane`,a:["b","stove"]},
-{q:`Spot the handsome duo in this flyer?
+c) Sugarcane`,
+a:["b","stove"]
+},
+{
+q:`Spot the handsome duo in this flyer?
 (Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
 a) Pythagoras and Carl Friedrich Gauss
 b) Euler and Archimedes
-c) Aryabhata and Srinivasa Ramanujan`,a:["c","aryabhata","ramanujan"]},
-{q:`What does Sankranti signify astronomically?
+c) Aryabhata and Srinivasa Ramanujan`,
+a:["c","aryabhata","ramanujan"]
+},
+{
+q:`What does Sankranti signify astronomically?
 a) Full moon day
 b) Sun’s transition into Capricorn (Makara Rashi)
 c) Start of winter
-d) Spring equinox`,a:["b"]},
-{q:`Why are kites flown during Sankranti?
+d) Spring equinox`,
+a:["b"]
+},
+{
+q:`Why are kites flown during Sankranti?
 a) For entertainment only
 b) To scare birds away
 c) To mark the monsoon season
-d) To welcome the Sun’s northward journey (Uttarayan)`,a:["d"]},
-{q:`Stove ain't apple pie 😂, it’s π… why?
+d) To welcome the Sun’s northward journey (Uttarayan)`,
+a:["d"]
+},
+{
+q:`Stove ain't apple pie 😂, it’s π… why?
 a) Nature’s infinite harvest loop in life’s eternal abundance circle
-b) Because π represents the number of cashews used in making pongal`,a:["a"]},
-{q:`Total Harvest = 750 kg  
+b) Because π represents the number of cashews used in making pongal`,
+a:["a"]
+},
+{
+q:`Total Harvest = 750 kg  
 Rice constitutes 40% of the total harvest.
 
 How many kilograms of rice were harvested?
 a) 300 kg
 b) 250 kg
-c) 350 kg`,a:["a","300"]}
+c) 350 kg`,
+a:["a","300"]
+}
 ];
 
-/* POOL (35) */
-const pool=[ /* unchanged from your last correct version */ 
-{q:`If f(x)=2x−3, find f(5).`,a:["7"]},
-{q:`If f(x)=x², find f(−4).`,a:["16"]},
-{q:`For f(x)=3x+1, find x when f(x)=10.`,a:["3"]},
-{q:`Is f(x)=x² increasing or decreasing for x>0?`,a:["increasing"]},
-{q:`Find f(0) for f(x)=x+4.`,a:["4"]},
-{q:`State the vertical shift in y=(x−2)²+5.`,a:["up5","5"]},
-{q:`What reflection occurs in y=−x²?`,a:["xaxis"]},
-{q:`Horizontal shift in y=(x+3)².`,a:["left3","3"]},
-{q:`Stretch factor in y=2x².`,a:["2"]},
-{q:`Evaluate log₁₀(100).`,a:["2"]},
+const pool = [
+
+/* FUNCTIONS (conceptual + numeric) */
+{q:`If f(x)=x²−4, find the value of f(2).`,a:["0"]},
+{q:`For f(x)=3x+1, find the value of x when f(x)=10.`,a:["3"]},
+{q:`State whether f(x)=x² is even or odd.`,a:["even"]},
+{q:`Find the y-intercept of the function y=2x−5.`,a:["-5"]},
+
+/* TRANSFORMATIONS */
+{q:`In y=(x−3)², state the horizontal shift.`,a:["right3","3"]},
+{q:`State the vertical translation in y=x²+6.`,a:["up6","6"]},
+{q:`What reflection occurs in y=−f(x)?`,a:["xaxis"]},
+{q:`Identify the stretch factor in y=4x².`,a:["4"]},
+
+/* LOGARITHMS */
+{q:`Evaluate log₁₀(1000).`,a:["3"]},
 {q:`Evaluate log₁₀(0.01).`,a:["-2"]},
-{q:`Simplify log(10³).`,a:["3"]},
-{q:`Convert log₁₀(1000)=3 to exponential form.`,a:["10^3=1000"]},
-{q:`Divide 60 in the ratio 2:3. Find the larger part.`,a:["36"]},
-{q:`If 5 kg costs ₹150, what is the cost of 2 kg?`,a:["60"]},
-{q:`If x ∝ y and x=10 when y=2, find x when y=5.`,a:["25"]},
-{q:`Simplify the ratio 24:36.`,a:["2:3"]},
-{q:`A field yields 120 kg per hour. How much in 3 hours?`,a:["360"]},
-{q:`If 25% of 800 kg is pulses, how much pulses?`,a:["200"]},
-{q:`A farmer sells rice at ₹40/kg. Earnings for 15 kg?`,a:["600"]},
-{q:`Temperature rises from 20°C to 30°C. Change?`,a:["10"]},
-{q:`Evaluate 3² + 4².`,a:["25"]},
-{q:`Find 15% of 200.`,a:["30"]},
-{q:`Calculate √144.`,a:["12"]},
-{q:`What is 2³ × 2²?`,a:["32"]},
-{q:`Solve: 100 ÷ 4 + 5.`,a:["30"]},
-{q:`Solve: 3(x−2)=9.`,a:["5"]},
-{q:`Mean of 2,4,6,8.`,a:["5"]},
-{q:`If x:y=4:5 and x=20, find y.`,a:["25"]},
-{q:`Simplify 2⁴.`,a:["16"]},
-{q:`Evaluate 5! ÷ 4!.`,a:["5"]},
-{q:`Solve 7² − 3².`,a:["40"]}
+{q:`Solve log x = 1.`,a:["10"]},
+{q:`Write log₁₀(100)=2 in exponential form.`,a:["10^2=100"]},
+
+/* RATIO & PROPORTION */
+{q:`Divide 90 in the ratio 2:1. Find the larger share.`,a:["60"]},
+{q:`Simplify the ratio 18:24.`,a:["3:4"]},
+{q:`If 4 kg of rice costs ₹160, find the cost of 1 kg.`,a:["40"]},
+
+/* SEQUENCES & SERIES */
+{q:`Find the next term: 2, 4, 6, 8, __`,a:["10"]},
+{q:`Find the sum of the first 5 natural numbers.`,a:["15"]},
+{q:`Find the 5th term of the sequence n².`,a:["25"]},
+
+/* STATISTICS */
+{q:`Find the mean of 2, 4, 6, 8.`,a:["5"]},
+{q:`Find the range of the data set: 3, 7, 10, 15.`,a:["12"]},
+
+/* ALGEBRA */
+{q:`Solve: 3x − 9 = 0.`,a:["3"]},
+{q:`Solve: 2(x−4)=10.`,a:["9"]},
+{q:`Simplify: (x²)(x³).`,a:["x^5"]},
+
+/* MENTAL MATH */
+{q:`Evaluate 15% of 200.`,a:["30"]},
+{q:`Find √169.`,a:["13"]},
+{q:`Evaluate 2³ × 4.`,a:["32"]},
+{q:`Solve: 100 ÷ (5×4).`,a:["5"]},
+
+/* SANKRANTI / HARVEST MATH */
+{q:`A field yields 120 kg per hour. How much is harvested in 5 hours?`,a:["600"]},
+{q:`If 20% of a 500 kg harvest is pulses, find the mass of pulses.`,a:["100"]},
+{q:`A farmer sells rice at ₹50 per kg. How much does 8 kg cost?`,a:["400"]},
+{q:`Temperature rises from 18°C to 30°C. Find the increase.`,a:["12"]},
+
+/* COMBINED THINKING */
+{q:`Evaluate: 7² − 3².`,a:["40"]},
+{q:`Simplify 2⁵ ÷ 2³.`,a:["4"]}
+
 ];
 
 const questions=compulsory.concat(pool.sort(()=>Math.random()-0.5));
@@ -252,7 +305,7 @@ function normalize(x){
 
 function showQuestion(){
   questionNumber.textContent="Question "+(index+1);
-  questionText.innerHTML=questions[index].q.replace(/\n/g,"<br>");
+  questionText.innerHTML=questions[index].q.replace(/\n/g,"<br><br>");
   skipBtn.classList.toggle("hidden",index<6);
 }
 
@@ -278,22 +331,34 @@ function updateStatus(){
   timeEl.textContent=Math.floor(timeLeft/60)+":"+String(timeLeft%60).padStart(2,"0");
 }
 
-function endGame(){
+async function endGame(){
   clearInterval(timer);
   localStorage.setItem("completedGame","yes");
-  const scores=JSON.parse(localStorage.getItem("leaderboard")||"[]");
-  scores.push({name:nameInput.value,score});
-  scores.sort((a,b)=>b.score-a.score);
-  localStorage.setItem("leaderboard",JSON.stringify(scores.slice(0,10)));
+
+  await db.collection("leaderboard").add({
+    name:nameInput.value,
+    score:score,
+    time:Date.now()
+  });
+
+  const snap=await db.collection("leaderboard")
+    .orderBy("score","desc")
+    .orderBy("time","asc")
+    .limit(10).get();
 
   gamePage.classList.add("hidden");
   leaderboardPage.classList.remove("hidden");
   leaderboard.innerHTML="";
-  scores.slice(0,10).forEach((e,i)=>{
-    leaderboard.innerHTML+=`<div class="leader">
-      <span>${i+1}. ${e.name} ${i<3?["🥇","🥈","🥉"][i]:""}</span>
-      <span>${e.score}</span>
+
+  let r=1;
+  snap.forEach(d=>{
+    const x=d.data();
+    leaderboard.innerHTML+=`
+    <div class="leader">
+      <span>${r}. ${x.name} ${r<=3?["🥇","🥈","🥉"][r-1]:""}</span>
+      <span>${x.score}</span>
     </div>`;
+    r++;
   });
 }
 </script>
