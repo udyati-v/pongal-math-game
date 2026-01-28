@@ -1,365 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Sankranti Math Harvest</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sankranti Math Harvest</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #e67e22;
+            --secondary: #27ae60;
+            --accent: #f1c40f;
+            --bg-gradient: linear-gradient(#7a0c0c, #c0392b, #f39c12);
+        }
 
-<style>
-body{
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  font-family:"Segoe UI",Arial,sans-serif;
-  background:linear-gradient(#7a0c0c,#c0392b,#f39c12);
-  color:#fff;
-}
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
 
-.bg-sun,.bg-cane,.bg-pot{
-  position:fixed;
-  opacity:0.22;
-  z-index:0;
-  pointer-events:none;
-}
+        .bg-element { position: fixed; z-index: 0; pointer-events: none; opacity: 0.25; }
+        .sun { width: 140px; height: 140px; background: radial-gradient(circle, #ffd54f, #ff9800); 
+               border-radius: 50%; top: -20px; right: -20px; box-shadow: 0 0 40px #f1c40f; }
+        .cane { width: 12px; height: 280px; background: linear-gradient(#1e7f34, #3cb371); bottom: 0; left: 15px; }
 
-.bg-sun{
-  width:160px;height:160px;
-  background:radial-gradient(circle,#ffd54f,#ff9800);
-  border-radius:50%;
-  top:-40px;right:-70px;
-}
+        .card {
+            width: 92%;
+            max-width: 520px;
+            margin: 40px auto;
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 24px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
 
-.bg-cane{
-  width:12px;height:240px;
-  background:linear-gradient(#1e7f34,#3cb371);
-  bottom:0;left:-25px;
-}
+        h1 { color: var(--accent); margin-bottom: 8px; font-size: 1.8rem; }
+        .intro-line { font-size: 1rem; line-height: 1.6; margin-bottom: 20px; opacity: 0.9; }
+        
+        input {
+            width: 100%;
+            padding: 14px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+            background: #fff;
+            color: #333;
+        }
 
-.bg-pot{
-  width:90px;height:70px;
-  background:#8b4513;
-  border-radius:0 0 45px 45px;
-  bottom:-20px;right:-30px;
-}
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-.card{
-  max-width:540px;
-  width:100%;
-  margin:70px auto;
-  background:rgba(0,0,0,0.65);
-  padding:24px;
-  border-radius:18px;
-  position:relative;
-  z-index:5;
-}
+        .btn-green { background: var(--secondary); color: white; }
+        .btn-orange { background: var(--primary); color: white; margin-top: 12px; }
+        .btn-disabled { background: #444 !important; cursor: not-allowed; color: #888; }
 
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:8px;
-  border:none;
-  font-size:16px;
-}
+        .hidden { display: none !important; }
 
-.green{background:#27ae60;color:#fff;}
-.orange{background:#e67e22;color:#fff;}
-.disabled{background:#555;cursor:not-allowed;}
-.hidden{display:none;}
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 15px;
+        }
 
-.status{
-  display:flex;
-  justify-content:space-between;
-  font-weight:bold;
-  margin-top:15px;
-}
+        #questionText { 
+            text-align: left; 
+            font-size: 1.1rem; 
+            line-height: 1.6; 
+            margin: 20px 0;
+            white-space: pre-wrap; 
+        }
+        
+        .brownie-tag { 
+            color: var(--accent); 
+            font-weight: bold; 
+            background: rgba(241, 196, 15, 0.2);
+            padding: 12px;
+            border-radius: 10px;
+            display: block; 
+            margin-bottom: 15px; 
+        }
 
-.leader{
-  display:flex;
-  justify-content:space-between;
-  padding:6px 0;
-}
-</style>
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="bg-sun"></div>
-<div class="bg-cane"></div>
-<div class="bg-pot"></div>
+<div class="bg-element sun"></div>
+<div class="bg-element cane"></div>
 
 <div class="card" id="startPage">
-  <h1>Sankranti Math Harvest 🌾</h1>
-  <p>Beat the Clock ⏰️! Solve More ➕️ score more ✨,<br>top 3 wins prizes 🏆</p>
-  <input id="playerName" placeholder="Enter your name">
-  <button id="startBtn" class="green disabled">Start Game</button>
+    <h1>Sankranti Math Harvest</h1>
+    <p class="intro-line">Beat the Clock ⏰️! Solve More ➕️ score more ✨️, top 3 wins prizes 🏆</p>
+    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+    <button id="startBtn" class="btn-green btn-disabled">Start Game</button>
 </div>
 
 <div class="card hidden" id="gamePage">
-  <div id="questionNumber"></div>
-  <div id="questionText"></div>
+    <div id="brownieMessage" class="brownie-tag hidden">Start sweet: Brownie questions for Sihi huggi bonus points!</div>
+    <h3 id="qNumber" style="margin:0; color:var(--accent); text-align: left;">Question 1</h3>
+    <div id="questionText"></div>
 
-  <input id="answerInput" placeholder="Type your answer">
-  <button class="green" id="submitBtn">Submit</button>
-  <button class="orange hidden" id="skipBtn">Skip</button>
+    <input type="text" id="answerInput" placeholder="Type answer or option (a, b, c...)" autocomplete="off">
+    <button class="btn-green" id="submitBtn">Submit Answer</button>
+    <button class="btn-orange hidden" id="skipBtn">Skip</button>
 
-  <div class="status">
-    <div>⏳ <span id="time">2:00</span></div>
-    <div>⭐ <span id="score">0</span></div>
-  </div>
+    <div class="status-bar">
+        <span>⏳ <span id="timerDisplay">2:00</span></span>
+        <span>⭐ <span id="scoreDisplay">0</span></span>
+    </div>
 </div>
 
 <div class="card hidden" id="leaderboardPage">
-  <h2>🏆 Leaderboard</h2>
-  <div id="leaderboard"></div>
+    <h1>🏆 Leaderboard</h1>
+    <div id="leaderboardList">Calculating results...</div>
 </div>
 
 <script>
-/* FIREBASE INIT */
-firebase.initializeApp({
-  apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
-  authDomain: "pongal-math-game.firebaseapp.com",
-  projectId: "pongal-math-game",
-  storageBucket: "pongal-math-game.firebasestorage.app",
-  messagingSenderId: "656858683321",
-  appId: "1:656858683321:web:00532718045127c3778868"
-});
+/* --- CONFIG & DATA --- */
+const firebaseConfig = {
+    apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
+    authDomain: "pongal-math-game.firebaseapp.com",
+    projectId: "pongal-math-game",
+    storageBucket: "pongal-math-game.firebasestorage.app",
+    messagingSenderId: "656858683321",
+    appId: "1:656858683321:web:00532718045127c3778868"
+};
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ONE ATTEMPT RULE */
-if(localStorage.getItem("completedGame")==="yes"){
-  document.body.innerHTML="<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
-}
-
-/* DOM */
-const startPage=document.getElementById("startPage");
-const gamePage=document.getElementById("gamePage");
-const leaderboardPage=document.getElementById("leaderboardPage");
-const leaderboard=document.getElementById("leaderboard");
-
-const questionNumber=document.getElementById("questionNumber");
-const questionText=document.getElementById("questionText");
-const answerInput=document.getElementById("answerInput");
-const submitBtn=document.getElementById("submitBtn");
-const skipBtn=document.getElementById("skipBtn");
-
-const timeEl=document.getElementById("time");
-const scoreEl=document.getElementById("score");
-const nameInput=document.getElementById("playerName");
-const startBtn=document.getElementById("startBtn");
-
-/* START */
-nameInput.oninput=()=>startBtn.classList.toggle("disabled",!nameInput.value.trim());
-
-startBtn.onclick=()=>{
-  if(startBtn.classList.contains("disabled"))return;
-  startPage.classList.add("hidden");
-  gamePage.classList.remove("hidden");
-  startGame();
-};
-
-/* QUESTIONS */
-const compulsory=[
-{
-q:`Start sweet: Brownie questions for Sihi huggi bonus points!
-
-What does July – June signify:
-a) crop year
-b) financial year
-c) academic year`,
-a:["a","cropyear"]
-},
-{
-q:`Pi hide & seek! Spot the pi in the invite
-a) Temple
-b) Stove
-c) Sugarcane`,
-a:["b","stove"]
-},
-{
-q:`Spot the handsome duo in this flyer?
-(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
-a) Pythagoras and Carl Friedrich Gauss
-b) Euler and Archimedes
-c) Aryabhata and Srinivasa Ramanujan`,
-a:["c","aryabhata","ramanujan"]
-},
-{
-q:`What does Sankranti signify astronomically?
-a) Full moon day
-b) Sun’s transition into Capricorn (Makara Rashi)
-c) Start of winter
-d) Spring equinox`,
-a:["b"]
-},
-{
-q:`Why are kites flown during Sankranti?
-a) For entertainment only
-b) To scare birds away
-c) To mark the monsoon season
-d) To welcome the Sun’s northward journey (Uttarayan)`,
-a:["d"]
-},
-{
-q:`Stove ain't apple pie 😂, it’s π… why?
-a) Nature’s infinite harvest loop in life’s eternal abundance circle
-b) Because π represents the number of cashews used in making pongal`,
-a:["a"]
-},
-{
-q:`Total Harvest = 750 kg  
-Rice constitutes 40% of the total harvest.
-
-How many kilograms of rice were harvested?
-a) 300 kg
-b) 250 kg
-c) 350 kg`,
-a:["a","300"]
-}
+const compulsoryQuestions = [
+    { q: "What does July – June signify:\n\na) Crop year\nb) Financial year\nc) Academic year", a: ["a", "cropyear"] },
+    { q: "Pi hide & seek! Spot the pi in the invite\n\na) Temple\nb) Stove\nc) Sugarcane", a: ["b", "stove", "pot"] },
+    { q: "Spot the handsome duo in this flyer?\n(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)\n\na) Harish Chandra and Bhaskaracharya\nb) P.C. Mahalanobis and Satyendra Nath Bose\nc) Srinivasa Ramanujan and Aryabhata", a: ["c", "ramanujan", "aryabhata"] },
+    { q: "What does Sankranti signify astronomically?\n\na) Full moon day\nb) Sun’s transition into Capricorn (Makara Rashi)\nc) Start of winter\nd) Spring", a: ["b", "capricorn", "makara"] },
+    { q: "Why are kites flown during Sankranti?\n\na) For entertainment only\nb) To scare birds away\nc) To mark the monsoon season\nd) To welcome the Sun’s northward journey (Uttarayan)", a: ["d", "uttarayan"] },
+    { q: "Stove ain't apple pie 😂, it’s π… why?\n\na) Nature’s infinite harvest loop in life’s eternal abundance circle\nb) Because π represents the number of cashews used in making pongal", a: ["a", "nature"] },
+    { q: "Total Harvest = 750 kg\nRice constitutes 40% of the total harvest.\nHow many kilograms of rice were harvested?\n\na) 300 kg\nb) 250 kg\nc) 350 kg", a: ["a", "300"] }
 ];
 
-const pool = [
-{q:`If f(x)=x²−4, find the value of f(2).`,a:["0"]},
-{q:`For f(x)=3x+1, find the value of x when f(x)=10.`,a:["3"]},
-{q:`State whether f(x)=x² is even or odd.`,a:["even"]},
-{q:`Find the y-intercept of the function y=2x−5.`,a:["-5"]},
-{q:`In y=(x−3)², state the horizontal shift.`,a:["right3","3"]},
-{q:`State the vertical translation in y=x²+6.`,a:["up6","6"]},
-{q:`What reflection occurs in y=−f(x)?`,a:["xaxis"]},
-{q:`Identify the stretch factor in y=4x².`,a:["4"]},
-{q:`Evaluate log₁₀(1000).`,a:["3"]},
-{q:`Evaluate log₁₀(0.01).`,a:["-2"]},
-{q:`Solve log x = 1.`,a:["10"]},
-{q:`Write log₁₀(100)=2 in exponential form.`,a:["10^2=100"]},
-{q:`Divide 90 in the ratio 2:1. Find the larger share.`,a:["60"]},
-{q:`Simplify the ratio 18:24.`,a:["3:4"]},
-{q:`If 4 kg of rice costs ₹160, find the cost of 1 kg.`,a:["40"]},
-{q:`Find the next term: 2, 4, 6, 8, __`,a:["10"]},
-{q:`Find the sum of the first 5 natural numbers.`,a:["15"]},
-{q:`Find the 5th term of the sequence n².`,a:["25"]},
-{q:`Find the mean of 2, 4, 6, 8.`,a:["5"]},
-{q:`Find the range of the data set: 3, 7, 10, 15.`,a:["12"]},
-{q:`Solve: 3x − 9 = 0.`,a:["3"]},
-{q:`Solve: 2(x−4)=10.`,a:["9"]},
-{q:`Simplify: (x²)(x³).`,a:["x^5"]},
-{q:`Evaluate 15% of 200.`,a:["30"]},
-{q:`Find √169.`,a:["13"]},
-{q:`Evaluate 2³ × 4.`,a:["32"]},
-{q:`Solve: 100 ÷ (5×4).`,a:["5"]},
-{q:`A field yields 120 kg per hour. How much is harvested in 5 hours?`,a:["600"]},
-{q:`If 20% of a 500 kg harvest is pulses, find the mass of pulses.`,a:["100"]},
-{q:`A farmer sells rice at ₹50 per kg. How much does 8 kg cost?`,a:["400"]},
-{q:`Temperature rises from 18°C to 30°C. Find the increase.`,a:["12"]},
-{q:`Evaluate: 7² − 3².`,a:["40"]},
-{q:`Simplify 2⁵ ÷ 2³.`,a:["4"]}
+const poolQuestions = [
+    { q: "Evaluate: log₂(32)", a: ["5"] },
+    { q: "If f(x) = 2x + 3 and g(x) = x², find f(g(2)).", a: ["11"] },
+    { q: "Find the gradient (slope) of the line: 3x + y = 10", a: ["-3"] },
+    { q: "Solve for x: 5^(x-1) = 25", a: ["3"] },
+    { q: "A Pongal pot has a diameter of 20cm. What is the radius?", a: ["10"] },
+    { q: "In a geometric sequence, u₁ = 3 and r = 2. Find the 4th term (u₄).", a: ["24"] },
+    { q: "State the vertical asymptote of: f(x) = 1 / (x - 5)", a: ["x=5", "5"] },
+    { q: "Evaluate: log₅(1)", a: ["0"] },
+    { q: "Solve for x: ln(x) = 0", a: ["1"] },
+    { q: "Find the midpoint between points (2, 4) and (6, 10).", a: ["4,7"] },
+    { q: "If a kite string makes a 45° angle with the ground, what is the gradient of the string?", a: ["1"] },
+    { q: "Expand and simplify: (x + 3)(x - 3)", a: ["x^2-9"] },
+    { q: "What is the period of the function: y = sin(x)", a: ["360", "2pi"] },
+    { q: "Find the value of 2⁻³ as a fraction.", a: ["1/8"] },
+    { q: "A harvest bag weighs 15.4 kg. Convert this to grams.", a: ["15400"] },
+    { q: "If 3 men can harvest a field in 6 hours, how many hours for 6 men?", a: ["3"] },
+    { q: "Calculate the discriminant (Δ) for: x² + 4x + 4 = 0", a: ["0"] },
+    { q: "Find the sum of the interior angles of a triangle.", a: ["180"] },
+    { q: "Solve for x: √(2x + 1) = 3", a: ["4"] },
+    { q: "A farmer has 200 cows and 15% are calves. How many calves?", a: ["30"] },
+    { q: "If f(x) = x² − 4, find the value of f(2).", a: ["0"] },
+    { q: "Find the y-intercept of: y = 2x − 5", a: ["-5"] },
+    { q: "Evaluate: log₁₀(1000)", a: ["3"] },
+    { q: "Find √169", a: ["13"] },
+    { q: "Solve for x: 3x − 9 = 0", a: ["3"] },
+    { q: "Simplify the ratio 18:24", a: ["3:4"] }
 ];
 
-const questions=compulsory.concat(pool.sort(()=>Math.random()-0.5));
+/* --- ENGINE --- */
+let currentIndex = 0;
+let score = 0;
+let timeLeft = 120; 
+let timerInterval;
+let questions = [];
 
-/* GAME LOGIC */
-let index=0,score=0,timeLeft=120,timer;
-let gameEnded = false;
-
-function startGame(){
-  showQuestion();
-  updateStatus();
-  timer = setInterval(() => {
-    timeLeft--;
-    updateStatus();
-
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      endGame();
-    }
-  }, 1000);
+if(localStorage.getItem("sankranti_attempt") === "done") {
+    document.body.innerHTML = "<div class='card'><h1>Harvest Finished</h1><p>You have already completed your attempt.</p></div>";
 }
 
-function normalize(x){
-  return x.toLowerCase().replace(/[^a-z0-9:+^=.-]/g,"");
-}
-
-function showQuestion(){
-  questionNumber.textContent="Question "+(index+1);
-  questionText.innerHTML=questions[index].q.replace(/\n/g,"<br><br>");
-  skipBtn.classList.toggle("hidden",index<6);
-}
-
-submitBtn.onclick=()=>{
-  if(gameEnded) return;
-  if(!answerInput.value.trim()) return;
-  const user=normalize(answerInput.value);
-  const correct=questions[index].a.some(a=>normalize(a)===user);
-  score+=correct?5:-2;
-  nextQuestion();
+document.getElementById('playerName').oninput = function() {
+    document.getElementById('startBtn').classList.toggle('btn-disabled', this.value.trim() === "");
 };
 
-skipBtn.onclick=()=>{
-  if(gameEnded) return;
-  nextQuestion();
+document.getElementById('startBtn').onclick = function() {
+    if(this.classList.contains('btn-disabled')) return;
+    questions = [...compulsoryQuestions, ...poolQuestions.sort(() => Math.random() - 0.5)];
+    document.getElementById('startPage').classList.add('hidden');
+    document.getElementById('gamePage').classList.remove('hidden');
+    startTimer();
+    showQuestion();
 };
 
-function nextQuestion(){
-  answerInput.value="";
-  index++;
-  if(index>=questions.length){
-    endGame();
-  }
-  else showQuestion();
+function startTimer() {
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        let mins = Math.floor(timeLeft / 60);
+        let secs = timeLeft % 60;
+        document.getElementById('timerDisplay').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        if(timeLeft <= 0) endGame();
+    }, 1000);
 }
 
-function updateStatus(){
-  scoreEl.textContent=score;
-  timeEl.textContent=Math.floor(timeLeft/60)+":"+String(timeLeft%60).padStart(2,"0");
+function showQuestion() {
+    if(currentIndex >= questions.length) return endGame();
+    const currentQ = questions[currentIndex];
+    document.getElementById('qNumber').innerText = `Question ${currentIndex + 1}`;
+    document.getElementById('questionText').innerText = currentQ.q;
+    document.getElementById('answerInput').value = "";
+    document.getElementById('brownieMessage').classList.toggle('hidden', currentIndex !== 0);
+    document.getElementById('skipBtn').classList.toggle('hidden', currentIndex < 7);
 }
 
-async function endGame(){
-  if(gameEnded) return;
-  gameEnded = true;
+function normalize(str) {
+    return str.toLowerCase().trim().replace(/[^a-z0-9.-]/g, "");
+}
 
-  clearInterval(timer);
+document.getElementById('submitBtn').onclick = submitAnswer;
+document.getElementById('answerInput').onkeypress = (e) => { if(e.key === 'Enter') submitAnswer(); };
 
-  // ✅ FORCE UI CHANGE FIRST
-  gamePage.classList.add("hidden");
-  leaderboardPage.classList.remove("hidden");
-  leaderboard.innerHTML = "<p>Loading leaderboard...</p>";
+function submitAnswer() {
+    const rawVal = document.getElementById('answerInput').value;
+    if(!rawVal.trim()) return;
+    const userVal = normalize(rawVal);
+    const isCorrect = questions[currentIndex].a.some(ans => normalize(ans) === userVal);
+    if(isCorrect) score += 10; else score -= 2;
+    document.getElementById('scoreDisplay').innerText = score;
+    currentIndex++;
+    showQuestion();
+}
 
-  localStorage.setItem("completedGame","yes");
+document.getElementById('skipBtn').onclick = function() {
+    currentIndex++;
+    showQuestion();
+};
 
-  try {
-    await db.collection("leaderboard").add({
-      name: nameInput.value,
-      score: score,
-      time: Date.now()
-    });
+async function endGame() {
+    clearInterval(timerInterval);
+    localStorage.setItem("sankranti_attempt", "done");
+    document.getElementById('gamePage').classList.add('hidden');
+    document.getElementById('leaderboardPage').classList.remove('hidden');
+    const name = document.getElementById('playerName').value.trim();
+    try {
+        await db.collection("leaderboard").add({ name, score, time: Date.now() });
+        showLeaderboard();
+    } catch(e) { document.getElementById('leaderboardList').innerText = "Score saved."; }
+}
 
-    const snap = await db.collection("leaderboard")
-      .orderBy("score","desc")
-      .orderBy("time","asc")
-      .limit(10)
-      .get();
-
-    leaderboard.innerHTML = "";
-    let r = 1;
-
-    snap.forEach(d=>{
-      const x = d.data();
-      leaderboard.innerHTML += `
-        <div class="leader">
-          <span>${r}. ${x.name} ${r<=3?["🥇","🥈","🥉"][r-1]:""}</span>
-          <span>${x.score}</span>
-        </div>`;
-      r++;
-    });
-
-  } catch (e) {
-    leaderboard.innerHTML = "<p>Error loading leaderboard</p>";
-    console.error(e);
-  }
+async function showLeaderboard() {
+    const list = document.getElementById('leaderboardList');
+    try {
+        const snap = await db.collection("leaderboard").orderBy("score", "desc").limit(10).get();
+        let html = ""; let rank = 1;
+        snap.forEach(doc => {
+            const d = doc.data();
+            const medal = rank===1 ? "🥇" : rank===2 ? "🥈" : rank===3 ? "🥉" : "";
+            html += `<div class="leader-row"><span><b>${rank}.</b> ${d.name} ${medal}</span><span style="color:var(--accent)">${d.score}</span></div>`;
+            rank++;
+        });
+        list.innerHTML = html;
+    } catch(e) { list.innerHTML = "Leaderboard error."; }
 }
 </script>
 </body>
