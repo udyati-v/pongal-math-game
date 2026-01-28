@@ -18,7 +18,7 @@ body{
 .card{
   background:#fff3e0;
   width:92%;
-  max-width:480px;
+  max-width:500px;
   padding:22px;
   border-radius:16px;
   box-shadow:0 12px 30px rgba(0,0,0,0.25);
@@ -78,7 +78,7 @@ button{border:none;cursor:pointer}
 </div>
 
 <script>
-/* ---------- BLOCK REPLAY IF ALREADY COMPLETED ---------- */
+/* ---------- BLOCK REPLAY AFTER COMPLETION ---------- */
 if (localStorage.getItem("pongal_completed")) {
   document.body.innerHTML = `
     <h2 style="text-align:center;margin-top:40px">
@@ -94,70 +94,92 @@ function formatTime(t){
 }
 
 /* ---------- GAME STATE ---------- */
-let time=150;          // 2.5 minutes
+let time=150;
 let timer;
 let score=0;
 let index=0;
 let usedPool=[];
 
-/* ---------- COMPULSORY QUESTIONS ---------- */
+/* ---------- COMPULSORY QUESTIONS (VERBATIM) ---------- */
 const compulsory=[
 {
-q:`What does July – June signify?
-a) Crop year
-b) Financial year
-c) Academic year`,
+q:`Question 1  
+What does July – June signify:  
+a) Crop year  
+b) Financial year  
+c) Academic year  
+
+Answer: a  `,
 a:["a","crop year"],
 intro:"Start sweet: Brownie questions for Sihi huggi bonus points!"
 },
 {
-q:`Pi hide & seek! Spot the pi in the invite
-a) Temple
-b) Stove
-c) Sugarcane`,
+q:`Question 2  
+Pi hide & seek! Spot the pi in the invite   
+a) Temple  
+b) Stove  
+c) Sugarcane   
+
+Answer: b  `,
 a:["b","stove"]
 },
 {
-q:`Spot the handsome duo in this flyer?
-a) Harish Chandra and Bhaskaracharya
-b) P.C. Mahalanobis and Satyendra Nath Bose
-c) Srinivasa Ramanujan and Aryabhata`,
+q:`Question 3  
+Spot the handsome duo in this flyer?   
+(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)  
+a) Harish Chandra and Bhaskaracharya  
+b) P.C. Mahalanobis and Satyendra Nath Bose  
+c) Srinivasa Ramanujan and Aryabhata  
+
+Answer: c  `,
 a:["c","ramanujan","aryabhata"]
 },
 {
-q:`What does Sankranti signify astronomically?
-a) Full moon day
-b) Sun’s transition into Capricorn (Makara Rashi)
-c) Start of winter
-d) Spring equinox`,
+q:`Question 4  
+What does Sankranti signify astronomically?  
+a) Full moon day  
+b) Sun’s transition into Capricorn (Makara Rashi)  
+c) Start of winter  
+d) Spring equinox  
+
+Answer: b  `,
 a:["b","capricorn","makara"]
 },
 {
-q:`Why are kites flown during Sankranti?
-a) For entertainment only
-b) To scare birds away
-c) To mark the monsoon season
-d) To welcome the Sun’s northward journey (Uttarayan)`,
+q:`Question 5  
+Why are kites flown during Sankranti?  
+a) For entertainment only  
+b) To scare birds away  
+c) To mark the monsoon season  
+d) To welcome the Sun’s northward journey (Uttarayan)  
+
+Answer: d  `,
 a:["d","uttarayan"]
 },
 {
-q:`Stove ain't apple pie 😂, it’s π… why?
-a) Nature’s infinite harvest loop
-b) Cashew count`,
+q:`Question 6  
+Stove ain't apple pie😂, it’s π… why?   
+a)Nature’s infinite harvest loop in life’s eternal abundance circle  
+b)Because π represents the number of cashews used in making pongal  
+
+Answer: a  `,
 a:["a","infinite"]
 },
 {
-q:`Total Harvest = 750 kg
-Rice constitutes 40%.
-How many kilograms of rice were harvested?
-a) 300 kg
-b) 250 kg
-c) 350 kg`,
+q:`Question 7  
+Total Harvest = 750 kg  
+Rice constitutes 40% of the total harvest.  
+How many kilograms of rice were harvested?  
+a) 300 kg  
+b) 250 kg  
+c) 350 kg  
+
+Answer: a  `,
 a:["a","300"]
 }
 ];
 
-/* ---------- HARD POOL (35 DISTINCT QUESTIONS) ---------- */
+/* ---------- HARD QUESTION POOL (35, NON-REPEATING TYPES) ---------- */
 const pool=[
 {q:"Evaluate log₁₀(1000)",a:["3"]},
 {q:"If f(x)=3x−4, find f⁻¹(5)",a:["3"]},
@@ -198,6 +220,7 @@ function startGame(){
   if(!playerName.value.trim()) return;
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
+
   timeSpan.innerText=formatTime(time);
   scoreSpan.innerText=score;
 
@@ -259,10 +282,7 @@ function skipQuestion(){
 
 function endGame(){
   clearInterval(timer);
-
-  // 🔒 LOCK DEVICE ONLY AFTER COMPLETION
   localStorage.setItem("pongal_completed","true");
-
   gameScreen.classList.add("hidden");
   endScreen.classList.remove("hidden");
   finalScore.innerText=score;
