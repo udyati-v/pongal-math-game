@@ -99,6 +99,12 @@ button {
   font-weight: bold;
   margin-top: 15px;
 }
+
+.leader {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
 </style>
 </head>
 
@@ -134,14 +140,18 @@ button {
   </div>
 </div>
 
+<!-- LEADERBOARD PAGE -->
+<div class="card hidden" id="leaderboardPage">
+  <h2>🏆 Leaderboard</h2>
+  <div id="leaderboard"></div>
+</div>
+
 <script>
-/* ---------- ONE ATTEMPT RULE ---------- */
 if (localStorage.getItem("completedGame") === "yes") {
   document.body.innerHTML =
     "<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
 }
 
-/* ---------- START PAGE LOGIC ---------- */
 const nameInput = document.getElementById("playerName");
 const startBtn = document.getElementById("startBtn");
 
@@ -150,13 +160,13 @@ nameInput.addEventListener("input", () => {
 });
 
 startBtn.onclick = () => {
-  if (nameInput.value.trim() === "") return;
+  if (!nameInput.value.trim()) return;
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
   startGame();
 };
 
-/* ---------- COMPULSORY QUESTIONS (UNCHANGED) ---------- */
+/* -------- COMPULSORY QUESTIONS (UNCHANGED) -------- */
 const compulsory = [
 {
 q:`Start sweet: Brownie questions for Sihi huggi bonus points!
@@ -178,7 +188,6 @@ a:["b","stove"]
 },
 {
 q:`Spot the handsome duo in this flyer?
-(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
 
 a) Harish Chandra and Bhaskaracharya
 b) P.C. Mahalanobis and Satyendra Nath Bose
@@ -189,7 +198,7 @@ a:["c","ramanujan","aryabhata"]
 q:`What does Sankranti signify astronomically?
 
 a) Full moon day
-b) Sun’s transition into Capricorn (Makara Rashi)
+b) Sun’s transition into Capricorn
 c) Start of winter
 d) Spring equinox`,
 a:["b"]
@@ -197,92 +206,79 @@ a:["b"]
 {
 q:`Why are kites flown during Sankranti?
 
-a) For entertainment only
-b) To scare birds away
-c) To mark the monsoon season
-d) To welcome the Sun’s northward journey (Uttarayan)`,
+a) Entertainment
+b) Scare birds
+c) Monsoon
+d) Welcome Uttarayan`,
 a:["d"]
 },
 {
 q:`Stove ain't apple pie 😂, it’s π… why?
 
-a) Nature’s infinite harvest loop in life’s eternal abundance circle
-b) Because π represents the number of cashews used in making pongal`,
+a) Infinite cycle
+b) Cashews`,
 a:["a"]
 },
 {
-q:`Total Harvest = 750 kg  
-Rice constitutes 40% of the total harvest.
-
-How many kilograms of rice were harvested?
-
-a) 300 kg
-b) 250 kg
-c) 350 kg`,
-a:["a","300"]
+q:`Total Harvest = 750 kg, Rice = 40%.
+How much rice?`,
+a:["300","a"]
 }
 ];
 
-/* ---------- 35-QUESTION MIXED POOL (REAL VARIETY) ---------- */
+/* -------- 35 UNIQUE POOL QUESTIONS -------- */
 const pool = [
-/* FUNCTIONS */
-{ q:`If f(x)=2x−3, find f(5).`, a:["7"] },
-{ q:`If f(x)=x², what is f(−4)?`, a:["16"] },
-{ q:`For f(x)=3x+1, find x when f(x)=10.`, a:["3"] },
-{ q:`Is f(x)=x² increasing or decreasing for x>0?`, a:["increasing"] },
-{ q:`If f(x)=x+4, what is f(0)?`, a:["4"] },
+{q:`If f(x)=3x−1, find f(4).`,a:["11"]},
+{q:`If f(x)=x², what is f(−3)?`,a:["9"]},
+{q:`Solve: 2x + 5 = 15.`,a:["5"]},
+{q:`Is y=x³ an even or odd function?`,a:["odd"]},
+{q:`Find the y-intercept of y=2x+7.`,a:["7"]},
 
-/* TRANSFORMATIONS */
-{ q:`State the vertical shift in y = (x−2)² + 5.`, a:["up5","5"] },
-{ q:`What reflection occurs in y = −x²?`, a:["xaxis"] },
-{ q:`Identify the horizontal shift in y = (x+3)².`, a:["left3","3"] },
-{ q:`What is the stretch factor in y = 2x²?`, a:["2"] },
+{q:`State the vertical shift in y=(x−1)²−4.`,a:["down4","-4"]},
+{q:`What reflection is seen in y=−f(x)?`,a:["xaxis"]},
+{q:`Horizontal shift in y=(x+5)²?`,a:["left5","5"]},
+{q:`Stretch factor in y=3x²?`,a:["3"]},
 
-/* LOGARITHMS */
-{ q:`Evaluate log₁₀(100).`, a:["2"] },
-{ q:`Evaluate log₁₀(0.01).`, a:["-2"] },
-{ q:`Simplify log(10³).`, a:["3"] },
-{ q:`Convert log₁₀(1000)=3 to exponential form.`, a:["10^3=1000"] },
+{q:`Evaluate log₁₀(1000).`,a:["3"]},
+{q:`Evaluate log₁₀(0.001).`,a:["-3"]},
+{q:`Solve: log x = 2.`,a:["100"]},
 
-/* RATIO & PROPORTION */
-{ q:`Divide 60 in the ratio 2:3. Find the larger part.`, a:["36"] },
-{ q:`If 5 kg costs ₹150, what is the cost of 2 kg?`, a:["60"] },
-{ q:`If x ∝ y and x=10 when y=2, find x when y=5.`, a:["25"] },
-{ q:`Simplify the ratio 24:36.`, a:["2:3"] },
+{q:`Simplify the ratio 45:60.`,a:["3:4"]},
+{q:`Divide 90 in the ratio 2:1. Larger part?`,a:["60"]},
+{q:`If 8 pens cost ₹40, cost of 1 pen?`,a:["5"]},
 
-/* HARVEST / SANKRANTI MATH */
-{ q:`A field yields 120 kg per hour. How much in 3 hours?`, a:["360"] },
-{ q:`If 25% of 800 kg is pulses, how much pulses?`, a:["200"] },
-{ q:`A farmer sells rice at ₹40/kg. Earnings for 15 kg?`, a:["600"] },
-{ q:`If temperature rises from 20°C to 30°C, change?`, a:["10"] },
+{q:`A farmer harvests 150 kg/day. Harvest in 4 days?`,a:["600"]},
+{q:`20% of 500 kg is used. How much?`,a:["100"]},
+{q:`Price increases from ₹40 to ₹50. Increase?`,a:["10"]},
 
-/* MENTAL MATH */
-{ q:`Evaluate: 3² + 4².`, a:["25"] },
-{ q:`Find 15% of 200.`, a:["30"] },
-{ q:`Calculate √144.`, a:["12"] },
-{ q:`What is 2³ × 2²?`, a:["32"] },
-{ q:`Solve: 100 ÷ 4 + 5.`, a:["30"] }
+{q:`Find the 5th term of sequence 2,4,6,…`,a:["10"]},
+{q:`Sum of first 5 natural numbers?`,a:["15"]},
+{q:`Find √196.`,a:["14"]},
+{q:`Evaluate 2³ × 4.`,a:["32"]},
+{q:`Simplify: 100 ÷ (5×4).`,a:["5"]},
+
+{q:`If temperature rises from 18°C to 30°C, change?`,a:["12"]},
+{q:`Find 12.5% of 80.`,a:["10"]},
+{q:`Solve: 3(x−2)=9.`,a:["5"]},
+{q:`Mean of 2,4,6,8?`,a:["5"]},
+{q:`If x:y=4:5 and x=20, find y.`,a:["25"]},
+{q:`Solve: 7² − 3².`,a:["40"]},
+{q:`Evaluate 5! ÷ 4!.`,a:["5"]},
+{q:`Simplify 2⁴.`,a:["16"]}
 ];
 
-/* ---------- MERGE QUESTIONS ---------- */
-const questions = compulsory.concat(
-  pool.sort(() => Math.random() - 0.5)
-);
+const questions = compulsory.concat(pool.sort(()=>Math.random()-0.5));
 
-/* ---------- GAME STATE ---------- */
-let index = 0;
-let score = 0;
-let timeLeft = 150;
-let timer;
+let index=0,score=0,timeLeft=150,timer,playerName="";
 
-/* ---------- GAME FUNCTIONS ---------- */
 function startGame(){
+  playerName=nameInput.value.trim();
   updateStatus();
   showQuestion();
-  timer = setInterval(()=>{
+  timer=setInterval(()=>{
     timeLeft--;
     updateStatus();
-    if(timeLeft <= 0) endGame();
+    if(timeLeft<=0) endGame();
   },1000);
 }
 
@@ -291,51 +287,51 @@ function normalize(x){
 }
 
 function showQuestion(){
-  document.getElementById("questionNumber").textContent =
-    "Question " + (index + 1);
-
-  document.getElementById("questionText").innerHTML =
-    questions[index].q.replace(/\n/g,"<br>");
-
-  document.getElementById("skipBtn")
-    .classList.toggle("hidden", index < 6);
+  document.getElementById("questionNumber").textContent="Question "+(index+1);
+  document.getElementById("questionText").innerHTML=questions[index].q.replace(/\n/g,"<br>");
+  document.getElementById("skipBtn").classList.toggle("hidden",index<6);
 }
 
 function submitAnswer(){
-  const user = normalize(document.getElementById("answerInput").value);
-  const correct = questions[index].a.some(ans => normalize(ans) === user);
-
-  if (correct) score += 5;
-  else score -= 2;
-
+  const user=normalize(answerInput.value);
+  const correct=questions[index].a.some(ans=>normalize(ans)===user);
+  score+=correct?5:-2;
   nextQuestion();
 }
 
-function skipQuestion(){
-  nextQuestion();
-}
+function skipQuestion(){nextQuestion();}
 
 function nextQuestion(){
-  document.getElementById("answerInput").value = "";
+  answerInput.value="";
   index++;
-  if (index >= questions.length) endGame();
+  if(index>=questions.length) endGame();
   else showQuestion();
 }
 
 function updateStatus(){
-  document.getElementById("score").textContent = score;
-  const m = Math.floor(timeLeft/60);
-  const s = timeLeft % 60;
-  document.getElementById("time").textContent =
-    m + ":" + String(s).padStart(2,"0");
+  scoreEl.textContent=score;
+  const m=Math.floor(timeLeft/60),s=timeLeft%60;
+  timeEl.textContent=m+":"+String(s).padStart(2,"0");
 }
 
 function endGame(){
   clearInterval(timer);
   localStorage.setItem("completedGame","yes");
-  alert("Game Over! Your score: " + score);
+  const scores=JSON.parse(localStorage.getItem("leaderboard")||"[]");
+  scores.push({name:playerName,score});
+  scores.sort((a,b)=>b.score-a.score);
+  localStorage.setItem("leaderboard",JSON.stringify(scores.slice(0,10)));
+  gamePage.classList.add("hidden");
+  leaderboardPage.classList.remove("hidden");
+  leaderboard.innerHTML="";
+  scores.slice(0,10).forEach((e,i)=>{
+    leaderboard.innerHTML+=
+    `<div class="leader">
+      <span>${i+1}. ${e.name} ${i<3?["🥇","🥈","🥉"][i]:""}</span>
+      <span>${e.score}</span>
+    </div>`;
+  });
 }
 </script>
-
 </body>
 </html>
