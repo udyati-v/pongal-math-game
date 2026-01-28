@@ -5,7 +5,6 @@
 <title>Sankranti Math Harvest</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -94,7 +93,6 @@ input,button{
 <div class="bg-cane"></div>
 <div class="bg-pot"></div>
 
-<!-- START PAGE -->
 <div class="card" id="startPage">
   <h1>Sankranti Math Harvest 🌾</h1>
   <p>Beat the Clock ⏰️! Solve More ➕️ score more ✨,<br>top 3 wins prizes 🏆</p>
@@ -102,7 +100,6 @@ input,button{
   <button id="startBtn" class="green disabled">Start Game</button>
 </div>
 
-<!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
   <div id="questionNumber"></div>
   <div id="questionText"></div>
@@ -112,12 +109,11 @@ input,button{
   <button class="orange hidden" id="skipBtn">Skip</button>
 
   <div class="status">
-    <div>⏳ <span id="time">2:30</span></div>
+    <div>⏳ <span id="time">2:00</span></div>
     <div>⭐ <span id="score">0</span></div>
   </div>
 </div>
 
-<!-- LEADERBOARD -->
 <div class="card hidden" id="leaderboardPage">
   <h2>🏆 Leaderboard</h2>
   <div id="leaderboard"></div>
@@ -167,7 +163,7 @@ startBtn.onclick=()=>{
   startGame();
 };
 
-/* QUESTIONS — REPLACED */
+/* QUESTIONS */
 const compulsory=[
 {
 q:`Start sweet: Brownie questions for Sihi huggi bonus points!
@@ -228,75 +224,60 @@ a:["a","300"]
 ];
 
 const pool = [
-
-/* FUNCTIONS (conceptual + numeric) */
 {q:`If f(x)=x²−4, find the value of f(2).`,a:["0"]},
 {q:`For f(x)=3x+1, find the value of x when f(x)=10.`,a:["3"]},
 {q:`State whether f(x)=x² is even or odd.`,a:["even"]},
 {q:`Find the y-intercept of the function y=2x−5.`,a:["-5"]},
-
-/* TRANSFORMATIONS */
 {q:`In y=(x−3)², state the horizontal shift.`,a:["right3","3"]},
 {q:`State the vertical translation in y=x²+6.`,a:["up6","6"]},
 {q:`What reflection occurs in y=−f(x)?`,a:["xaxis"]},
 {q:`Identify the stretch factor in y=4x².`,a:["4"]},
-
-/* LOGARITHMS */
 {q:`Evaluate log₁₀(1000).`,a:["3"]},
 {q:`Evaluate log₁₀(0.01).`,a:["-2"]},
 {q:`Solve log x = 1.`,a:["10"]},
 {q:`Write log₁₀(100)=2 in exponential form.`,a:["10^2=100"]},
-
-/* RATIO & PROPORTION */
 {q:`Divide 90 in the ratio 2:1. Find the larger share.`,a:["60"]},
 {q:`Simplify the ratio 18:24.`,a:["3:4"]},
 {q:`If 4 kg of rice costs ₹160, find the cost of 1 kg.`,a:["40"]},
-
-/* SEQUENCES & SERIES */
 {q:`Find the next term: 2, 4, 6, 8, __`,a:["10"]},
 {q:`Find the sum of the first 5 natural numbers.`,a:["15"]},
 {q:`Find the 5th term of the sequence n².`,a:["25"]},
-
-/* STATISTICS */
 {q:`Find the mean of 2, 4, 6, 8.`,a:["5"]},
 {q:`Find the range of the data set: 3, 7, 10, 15.`,a:["12"]},
-
-/* ALGEBRA */
 {q:`Solve: 3x − 9 = 0.`,a:["3"]},
 {q:`Solve: 2(x−4)=10.`,a:["9"]},
 {q:`Simplify: (x²)(x³).`,a:["x^5"]},
-
-/* MENTAL MATH */
 {q:`Evaluate 15% of 200.`,a:["30"]},
 {q:`Find √169.`,a:["13"]},
 {q:`Evaluate 2³ × 4.`,a:["32"]},
 {q:`Solve: 100 ÷ (5×4).`,a:["5"]},
-
-/* SANKRANTI / HARVEST MATH */
 {q:`A field yields 120 kg per hour. How much is harvested in 5 hours?`,a:["600"]},
 {q:`If 20% of a 500 kg harvest is pulses, find the mass of pulses.`,a:["100"]},
 {q:`A farmer sells rice at ₹50 per kg. How much does 8 kg cost?`,a:["400"]},
 {q:`Temperature rises from 18°C to 30°C. Find the increase.`,a:["12"]},
-
-/* COMBINED THINKING */
 {q:`Evaluate: 7² − 3².`,a:["40"]},
 {q:`Simplify 2⁵ ÷ 2³.`,a:["4"]}
-
 ];
 
 const questions=compulsory.concat(pool.sort(()=>Math.random()-0.5));
 
-/* GAME */
-let index=0,score=0,timeLeft=150,timer;
+/* GAME LOGIC */
+let index=0,score=0,timeLeft=120,timer;
+let gameEnded = false;
 
 function startGame(){
   showQuestion();
   updateStatus();
-  timer=setInterval(()=>{
+  timer = setInterval(() => {
+    if (gameEnded) return;
     timeLeft--;
     updateStatus();
-    if(timeLeft<=0)endGame();
-  },1000);
+    if (timeLeft <= 0) {
+      gameEnded = true;
+      clearInterval(timer);
+      endGame();
+    }
+  }, 1000);
 }
 
 function normalize(x){
@@ -310,19 +291,27 @@ function showQuestion(){
 }
 
 submitBtn.onclick=()=>{
-  if(!answerInput.value.trim())return;
+  if(gameEnded) return;
+  if(!answerInput.value.trim()) return;
   const user=normalize(answerInput.value);
   const correct=questions[index].a.some(a=>normalize(a)===user);
   score+=correct?5:-2;
   nextQuestion();
 };
 
-skipBtn.onclick=()=>nextQuestion();
+skipBtn.onclick=()=>{
+  if(gameEnded) return;
+  nextQuestion();
+};
 
 function nextQuestion(){
   answerInput.value="";
   index++;
-  if(index>=questions.length)endGame();
+  if(index>=questions.length){
+    gameEnded = true;
+    clearInterval(timer);
+    endGame();
+  }
   else showQuestion();
 }
 
@@ -332,6 +321,7 @@ function updateStatus(){
 }
 
 async function endGame(){
+  if(gameEnded !== true) gameEnded = true;
   clearInterval(timer);
   localStorage.setItem("completedGame","yes");
 
