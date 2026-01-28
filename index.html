@@ -1,101 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Pongal Math Harvest</title>
+<meta charset="UTF-8">
+<title>Pongal Math Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<style>
-body {
-  margin: 0;
-  font-family: "Poppins", sans-serif;
-  background: linear-gradient(-45deg,#f6c453,#f2a65a,#f7d046,#ffd27d);
-  background-size: 400% 400%;
-  animation: pongalBG 12s ease infinite;
-}
-
-@keyframes pongalBG {
-  0% {background-position:0% 50%;}
-  50% {background-position:100% 50%;}
-  100% {background-position:0% 50%;}
-}
-
-.card {
-  max-width: 520px;
-  margin: 40px auto;
-  background: #fff8e6;
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-
-h1 { text-align:center; }
-
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  font-size: 16px;
-  border-radius: 8px;
-}
-
-button {
-  background: #2ecc71;
-  border: none;
-  color: white;
-  font-weight: bold;
-}
-
-button.skip {
-  background:#f39c12;
-}
-
-.hidden { display:none; }
-
-#timer { font-weight:bold; margin-top:10px; }
-#score { margin-top:6px; }
-
-.leaderboard-item {
-  display:flex;
-  justify-content:space-between;
-  padding:6px 0;
-}
-</style>
-</head>
-
-<body>
-
-<div class="card" id="startScreen">
-  <h1>🌾 Pongal Math Harvest ☀️</h1>
-  <p style="text-align:center;">
-    Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️
-  </p>
-  <input id="playerName" placeholder="Enter your name"/>
-  <button onclick="startGame()">Start Game</button>
-</div>
-
-<div class="card hidden" id="gameScreen">
-  <div id="introText"></div>
-  <h3 id="qNumber"></h3>
-  <p id="questionText"></p>
-  <input id="answerInput" placeholder="Type your answer"/>
-  <button onclick="submitAnswer()">Submit</button>
-  <button id="skipBtn" class="skip hidden" onclick="skipQuestion()">Skip</button>
-  <div id="timer">⏱ Time Left: 2:30</div>
-  <div id="score">⭐ Score: 0</div>
-</div>
-
-<div class="card hidden" id="leaderboardScreen">
-  <h2>🏆 Leaderboard (Top 10)</h2>
-  <div id="leaderboardList"></div>
-</div>
-
-<script>
-/* ---------------- FIREBASE ---------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyBnFhuDbItM9kwjMgeDVrvMlWy5p-dNaLM",
   authDomain: "pongal-math-game.firebaseapp.com",
@@ -104,172 +18,250 @@ const firebaseConfig = {
   messagingSenderId: "656858683321",
   appId: "1:656858683321:web:dc3f28c9c92e3394778868"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
-/* ---------------- GAME STATE ---------------- */
-let questions = [];
-let index = 0;
-let score = 0;
-let timeLeft = 150;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window.db = db;
+window.addDoc = addDoc;
+window.collection = collection;
+window.query = query;
+window.orderBy = orderBy;
+window.limit = limit;
+window.getDocs = getDocs;
+</script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background: linear-gradient(135deg,#f7c873,#f4a261);
+  min-height:100vh;
+}
+.card{
+  max-width:420px;
+  margin:30px auto;
+  background:#fff3e0;
+  padding:20px;
+  border-radius:14px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+}
+h2,h3{text-align:center}
+.question{
+  white-space:pre-line;
+  line-height:1.5;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+button{border:none;cursor:pointer}
+#submitBtn{background:#2ecc71;color:white}
+#skipBtn{background:#e67e22;color:white}
+.small{text-align:center;margin-top:10px}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="startPage">
+<h2>🌾 Pongal Math Challenge 🌾</h2>
+<p style="text-align:center">
+Beat the clock! ⏰️ Solve more,➗️ score more💯 — top 3 wins rewards!✨️
+</p>
+<input id="nameInput" placeholder="Enter your name">
+<button onclick="startGame()">Start Game</button>
+</div>
+
+<div class="card hidden" id="gamePage">
+<h3 id="qCounter"></h3>
+<p id="extraText" style="font-weight:bold;"></p>
+<p id="questionText" class="question"></p>
+<input id="answerInput" placeholder="Type your answer">
+<button id="submitBtn">Submit</button>
+<button id="skipBtn" class="hidden">Skip</button>
+<p class="small">⏳ Time Left: <span id="time"></span>s</p>
+<p class="small">⭐ Score: <span id="score"></span></p>
+</div>
+
+<div class="card hidden" id="leaderboardPage">
+<h2>🏆 Leaderboard</h2>
+<ol id="leaderboardList"></ol>
+</div>
+
+<script>
+let score=0,time=150,index=0;
+let playerName="";
+let allQuestions=[];
 let timer;
 
-/* ---------------- COMPULSORY QUESTIONS ---------------- */
-const compulsory = [
+if(localStorage.getItem("pongal_attempted")){
+  document.body.innerHTML="<h2 style='text-align:center'>You have already attempted the game.</h2>";
+}
+
+const compulsory=[
 {
-q:`Start sweet: Brownie questions for Sihi huggi bonus points!\n\nQuestion 1  
-What does July – June signify?  
+q:
+`Question 1
+
+What does July – June signify?
+
 a) Crop year  
 b) Financial year  
 c) Academic year`,
-a:["a","crop year"]
+a:"a",
+extra:"Start sweet: Brownie questions for Sihi huggi bonus points!"
 },
 {
-q:`Question 2  
-Pi hide & seek! Spot the pi in the invite  
+q:
+`Question 2
+
+Pi hide & seek! Spot the pi in the invite
+
 a) Temple  
 b) Stove  
 c) Sugarcane`,
-a:["b","stove"]
+a:"b"
 },
 {
-q:`Question 3  
-Spot the handsome duo in this flyer?  
-(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)  
+q:
+`Question 3
+
+Spot the handsome duo in this flyer?
+(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
+
 a) Harish Chandra and Bhaskaracharya  
 b) P.C. Mahalanobis and Satyendra Nath Bose  
 c) Srinivasa Ramanujan and Aryabhata`,
-a:["c","ramanujan","aryabhata"]
+a:"c"
 },
 {
-q:`Question 4  
-What does Sankranti signify astronomically?  
+q:
+`Question 4
+
+What does Sankranti signify astronomically?
+
 a) Full moon day  
 b) Sun’s transition into Capricorn (Makara Rashi)  
 c) Start of winter  
 d) Spring equinox`,
-a:["b","capricorn","makara"]
+a:"b"
 },
 {
-q:`Question 5  
-Why are kites flown during Sankranti?  
+q:
+`Question 5
+
+Why are kites flown during Sankranti?
+
 a) For entertainment only  
 b) To scare birds away  
 c) To mark the monsoon season  
 d) To welcome the Sun’s northward journey (Uttarayan)`,
-a:["d","uttarayan"]
+a:"d"
 },
 {
-q:`Question 6  
-Stove ain't apple pie😂, it’s π… why?  
+q:
+`Question 6
+
+Stove ain't apple pie 😂, it’s π… why?
+
 a) Nature’s infinite harvest loop in life’s eternal abundance circle  
 b) Because π represents the number of cashews used in making pongal`,
-a:["a"]
+a:"a"
 },
 {
-q:`Question 7  
+q:
+`Question 7
+
 Total Harvest = 750 kg  
-Rice constitutes 40% of the total harvest.  
-How many kilograms of rice were harvested?  
+Rice constitutes 40% of the total harvest.
+
+How many kilograms of rice were harvested?
+
 a) 300 kg  
 b) 250 kg  
 c) 350 kg`,
-a:["a","300"]
+a:"a"
 }
 ];
 
-/* ---------------- HARD QUESTION POOL (35) ---------------- */
-const pool = [];
+const pool=[];
 for(let i=1;i<=35;i++){
   pool.push({
-    q:`Hard Question ${i}  
-If f(x)=2x²−3x+5, find f(${i%5+2})`,
-    a:[String(2*(i%5+2)**2 -3*(i%5+2)+5)]
+    q:
+`Question ${i+7}
+
+If f(x) = 2x² − 3x + 5, find f(${(i%5)+2})`,
+    a:(2*((i%5)+2)**2 - 3*((i%5)+2) + 5).toString()
   });
 }
 
-/* ---------------- GAME LOGIC ---------------- */
+allQuestions=[...compulsory,...pool.sort(()=>Math.random()-0.5)];
+
 function startGame(){
-  if(localStorage.getItem("played")){
-    alert("Only one attempt allowed!");
-    return;
-  }
-  const name = document.getElementById("playerName").value.trim();
-  if(!name) return alert("Enter name");
-  localStorage.setItem("played","yes");
-  window.playerName=name;
-
-  questions=[...compulsory,...shuffle(pool)];
-  document.getElementById("startScreen").classList.add("hidden");
-  document.getElementById("gameScreen").classList.remove("hidden");
-  startTimer();
+  playerName=document.getElementById("nameInput").value.trim();
+  if(!playerName)return alert("Enter name");
+  document.getElementById("startPage").classList.add("hidden");
+  document.getElementById("gamePage").classList.remove("hidden");
+  document.getElementById("score").innerText=score;
+  document.getElementById("time").innerText=time;
   loadQuestion();
-}
-
-function loadQuestion(){
-  if(index>=questions.length){
-    endGame();
-    return;
-  }
-  document.getElementById("answerInput").value="";
-  document.getElementById("qNumber").innerText=`Question ${index+1}`;
-  document.getElementById("questionText").innerText=questions[index].q;
-  document.getElementById("skipBtn").classList.toggle("hidden",index<7);
-}
-
-function submitAnswer(){
-  const ans=document.getElementById("answerInput").value.toLowerCase();
-  if(questions[index].a.some(x=>ans.includes(x))){
-    score+=5;
-  }
-  index++;
-  updateUI();
-  loadQuestion();
-}
-
-function skipQuestion(){
-  index++;
-  loadQuestion();
-}
-
-function updateUI(){
-  document.getElementById("score").innerText=`⭐ Score: ${score}`;
-}
-
-function startTimer(){
   timer=setInterval(()=>{
-    timeLeft--;
-    document.getElementById("timer").innerText=`⏱ Time Left: ${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,"0")}`;
-    if(timeLeft<=0) endGame();
+    time--;
+    document.getElementById("time").innerText=time;
+    if(time<=0)endGame();
   },1000);
 }
 
-function endGame(){
-  clearInterval(timer);
-  db.collection("scores").add({
-    name:playerName,
-    score,
-    time:Date.now()
-  }).then(showLeaderboard);
+function loadQuestion(){
+  if(index>=allQuestions.length)return endGame();
+  let q=allQuestions[index];
+  document.getElementById("qCounter").innerText=`Question ${index+1}`;
+  document.getElementById("questionText").innerText=q.q;
+  document.getElementById("extraText").innerText=q.extra||"";
+  document.getElementById("answerInput").value="";
+  document.getElementById("skipBtn").classList.toggle("hidden",index<6);
 }
 
-function showLeaderboard(){
-  document.getElementById("gameScreen").classList.add("hidden");
-  document.getElementById("leaderboardScreen").classList.remove("hidden");
-  db.collection("scores").orderBy("score","desc").limit(10).get()
-  .then(snap=>{
-    let html="";
-    snap.docs.forEach((d,i)=>{
-      const medal=i==0?"🥇":i==1?"🥈":i==2?"🥉":"";
-      html+=`<div class="leaderboard-item">${medal} ${d.data().name}<span>${d.data().score}</span></div>`;
-    });
-    document.getElementById("leaderboardList").innerHTML=html;
+document.getElementById("submitBtn").onclick=()=>{
+  let ans=document.getElementById("answerInput").value.trim().toLowerCase();
+  if(ans===allQuestions[index].a)score+=5;
+  document.getElementById("score").innerText=score;
+  index++;
+  loadQuestion();
+};
+
+document.getElementById("skipBtn").onclick=()=>{
+  index++;
+  loadQuestion();
+};
+
+async function endGame(){
+  clearInterval(timer);
+  localStorage.setItem("pongal_attempted","yes");
+  document.getElementById("gamePage").classList.add("hidden");
+  document.getElementById("leaderboardPage").classList.remove("hidden");
+
+  await addDoc(collection(db,"scores"),{
+    name:playerName,
+    score:score,
+    time:Date.now()
+  });
+
+  const q=query(collection(db,"scores"),orderBy("score","desc"),limit(10));
+  const snap=await getDocs(q);
+  let i=1;
+  snap.forEach(d=>{
+    let medal=i==1?"🥇":i==2?"🥈":i==3?"🥉":"";
+    leaderboardList.innerHTML+=`<li>${medal} ${d.data().name} — ${d.data().score}</li>`;
+    i++;
   });
 }
-
-function shuffle(arr){
-  return arr.sort(()=>Math.random()-0.5);
-}
 </script>
+
 </body>
 </html>
