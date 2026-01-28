@@ -1,267 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
 <title>Sankranti Math Harvest</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-  margin:0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(#6b0000,#b23a00,#e08b00);
-  min-height:100vh;
-  color:white;
-  overflow:hidden;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(#7a0c0c, #c0392b);
+  color: #fff;
+  overflow-x: hidden;
 }
 
-/* BACKGROUND ELEMENTS */
-.sun{
-  position:absolute;
-  top:80px;
-  right:30px;
-  width:160px;
-  height:160px;
-  background:radial-gradient(circle,#ffdb4d,#ff9800);
-  border-radius:50%;
-  opacity:0.3;
-}
-.sugarcane{
-  position:absolute;
-  bottom:0;
-  left:20px;
-  width:14px;
-  height:65%;
-  background:#1faa59;
-}
-.pongal{
-  position:absolute;
-  bottom:30px;
-  right:30px;
-  width:90px;
-  height:60px;
-  background:#b71c1c;
-  border-radius:0 0 50px 50px;
+.card {
+  max-width: 500px;
+  margin: 60px auto;
+  background: rgba(0,0,0,0.6);
+  padding: 25px;
+  border-radius: 16px;
+  text-align: center;
 }
 
-/* CARD */
-.card{
-  background:rgba(0,0,0,0.45);
-  max-width:420px;
-  margin:90px auto;
-  padding:25px;
-  border-radius:18px;
-  box-shadow:0 15px 40px rgba(0,0,0,0.5);
+input {
+  width: 90%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 10px;
 }
 
-/* START PAGE */
-#startPage h2{
-  text-align:center;
-  margin-bottom:10px;
-}
-#startPage p{
-  text-align:center;
-  font-size:0.95rem;
-}
-input{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:none;
-  font-size:1rem;
-  margin-top:10px;
-}
-button{
-  width:100%;
-  margin-top:15px;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  font-size:1rem;
-  cursor:pointer;
-}
-.start-btn{
-  background:#0f8f2f;
-  color:white;
-}
-.start-btn:disabled{
-  background:#555;
-  cursor:not-allowed;
+button {
+  width: 92%;
+  padding: 14px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 15px;
+  cursor: pointer;
 }
 
-/* GAME */
-.hidden{display:none;}
-.question-title{
-  font-size:1.2rem;
-  margin-bottom:10px;
+.green { background:#27ae60; color:white; }
+.orange { background:#e67e22; color:white; }
+.disabled { background:#555; cursor:not-allowed; }
+
+.status {
+  margin-top: 15px;
+  font-size: 18px;
 }
-.question-text{
-  white-space:pre-line;
-  line-height:1.5;
+
+.bg-sun, .bg-cane, .bg-pot {
+  position: fixed;
+  opacity: 0.25;
+  z-index: 0;
 }
-.submit-btn{background:#0f8f2f;color:white;}
-.timer-score{
-  display:flex;
-  justify-content:space-between;
-  margin-top:15px;
-  font-weight:bold;
+
+.bg-sun {
+  width: 200px;
+  height: 200px;
+  background: orange;
+  border-radius: 50%;
+  top: 40px;
+  right: -60px;
 }
+
+.bg-cane {
+  width: 20px;
+  height: 300px;
+  background: green;
+  bottom: 0;
+  left: 20px;
+}
+
+.bg-pot {
+  width: 120px;
+  height: 100px;
+  background: brown;
+  border-radius: 0 0 60px 60px;
+  bottom: 10px;
+  right: 30px;
+}
+
+.hidden { display:none; }
 </style>
 </head>
 
 <body>
 
-<div class="sun"></div>
-<div class="sugarcane"></div>
-<div class="pongal"></div>
+<div class="bg-sun"></div>
+<div class="bg-cane"></div>
+<div class="bg-pot"></div>
 
 <!-- START PAGE -->
 <div class="card" id="startPage">
-  <h2>Sankranti Math Harvest 🌾</h2>
-  <p>
-    Beat the Clock ⏰️! Solve More ➕️ score more ✨️,<br>
-    top 3 wins prizes 🏆
-  </p>
-  <input id="playerName" placeholder="Enter your name"/>
-  <button class="start-btn" id="startBtn" disabled>Start Game</button>
+  <h1>Sankranti Math Harvest 🎉</h1>
+  <p>Beat the Clock ⏰️! Solve More ➕️ score more ✨, top 3 wins prizes 🏆</p>
+  <input id="playerName" placeholder="Enter your name">
+  <button id="startBtn" class="green disabled">Start Game</button>
 </div>
 
 <!-- GAME PAGE -->
 <div class="card hidden" id="gamePage">
-  <div class="question-title" id="qNumber"></div>
-  <div class="question-text" id="qText"></div>
-
-  <input id="answerInput" placeholder="Type your answer"/>
-  <button class="submit-btn" onclick="submitAnswer()">Submit</button>
-
-  <div class="timer-score">
-    <div>⏳ Time: <span id="time">2:30</span></div>
-    <div>⭐ Score: <span id="score">0</span></div>
+  <h2 id="qNumber"></h2>
+  <p id="questionText"></p>
+  <input id="answerInput" placeholder="Type your answer">
+  <button class="green" onclick="submitAnswer()">Submit</button>
+  <button id="skipBtn" class="orange hidden" onclick="skipQuestion()">Skip</button>
+  <div class="status">
+    ⏳ <span id="time"></span> &nbsp; ⭐ Score: <span id="score"></span>
   </div>
 </div>
 
+<!-- LEADERBOARD -->
+<div class="card hidden" id="leaderboardPage">
+  <h2>🏆 Leaderboard</h2>
+  <ol id="leaderboardList"></ol>
+</div>
+
 <script>
-/* PREVENT REPLAY AFTER COMPLETION */
-if(localStorage.getItem("completedGame")==="yes"){
-  alert("You have already completed the game.");
-  document.body.innerHTML="";
+/* ---------- ATTEMPT CONTROL ---------- */
+if (localStorage.getItem("completedGame")) {
+  document.body.innerHTML = "<h2 style='text-align:center;margin-top:40vh'>Game already completed on this device.</h2>";
 }
 
-/* START LOGIC */
-const startBtn=document.getElementById("startBtn");
-const nameInput=document.getElementById("playerName");
+/* ---------- NAME LOGIC ---------- */
+const nameInput = document.getElementById("playerName");
+const startBtn = document.getElementById("startBtn");
 
-nameInput.addEventListener("input",()=>{
-  startBtn.disabled = nameInput.value.trim()==="";
+nameInput.addEventListener("input", () => {
+  startBtn.classList.toggle("disabled", !nameInput.value.trim());
 });
 
-startBtn.onclick=()=>{
-  localStorage.setItem("playerName",nameInput.value.trim());
+startBtn.onclick = () => {
+  if (!nameInput.value.trim()) return;
   document.getElementById("startPage").classList.add("hidden");
   document.getElementById("gamePage").classList.remove("hidden");
-  startTimer();
-  loadQuestion();
+  startGame();
 };
 
-/* QUESTIONS (UNCHANGED WORDING) */
-const questions=[
-`Start sweet: Brownie questions for Sihi huggi bonus points!
-
-What does July – June signify:
-a) Crop year
-b) Financial year
-c) Academic year`,
-
-`Pi hide & seek! Spot the pi in the invite
-a) Temple
-b) Stove
-c) Sugarcane`,
-
-`Spot the handsome duo in this flyer?
-(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
-a) Harish Chandra and Bhaskaracharya
-b) P.C. Mahalanobis and Satyendra Nath Bose
-c) Srinivasa Ramanujan and Aryabhata`,
-
-`What does Sankranti signify astronomically?
-a) Full moon day
-b) Sun’s transition into Capricorn (Makara Rashi)
-c) Start of winter
-d) Spring equinox`,
-
-`Why are kites flown during Sankranti?
-a) For entertainment only
-b) To scare birds away
-c) To mark the monsoon season
-d) To welcome the Sun’s northward journey (Uttarayan)`,
-
-`Stove ain't apple pie😂, it’s π… why?
-a) Nature’s infinite harvest loop in life’s eternal abundance circle
-b) Because π represents the number of cashews used in making pongal`,
-
-`Total Harvest = 750 kg
-Rice constitutes 40% of the total harvest.
-How many kilograms of rice were harvested?
-a) 300 kg
-b) 250 kg
-c) 350 kg`
+/* ---------- QUESTIONS ---------- */
+const compulsory = [
+{
+q:"Start sweet: Brownie questions for Sihi huggi bonus points!\n\nWhat does July – June signify:\n a) Crop year\n b) Financial year\n c) Academic year",
+a:["a","crop year"]
+},
+{
+q:"Pi hide & seek! Spot the pi in the invite\n a) Temple\n b) Stove\n c) Sugarcane",
+a:["b","stove"]
+},
+{
+q:"Spot the handsome duo in this flyer?\n a) Harish Chandra and Bhaskaracharya\n b) P.C. Mahalanobis and S.N. Bose\n c) Srinivasa Ramanujan and Aryabhata",
+a:["c","ramanujan","aryabhata"]
+},
+{
+q:"What does Sankranti signify astronomically?\n a) Full moon day\n b) Sun’s transition into Capricorn\n c) Start of winter\n d) Spring equinox",
+a:["b"]
+},
+{
+q:"Why are kites flown during Sankranti?\n a) For entertainment only\n b) To scare birds away\n c) To mark monsoon\n d) To welcome Uttarayan",
+a:["d"]
+},
+{
+q:"Stove ain't apple pie 😂, it’s π… why?\n a) Nature’s infinite loop\n b) Cashews in pongal",
+a:["a"]
+},
+{
+q:"Total Harvest = 750 kg\nRice is 40%\nHow many kg harvested?\n a)300 b)250 c)350",
+a:["a","300"]
+}
 ];
 
-const answers=["a","b","c","b","d","a","a"];
+const pool = [];
+for(let i=1;i<=35;i++){
+  pool.push({
+    q:`Mental Math ${i}: If f(x)=2x²+3x-${i}, find f(2)`,
+    a:[(2*4+6-i).toString()]
+  });
+}
 
-let index=0;
-let score=0;
-let timeLeft=150;
+let questions = compulsory.concat(pool);
+
+/* ---------- GAME STATE ---------- */
+let index = 0;
+let score = 0;
+let timeLeft = 150;
 let timer;
 
-/* TIMER */
-function startTimer(){
-  timer=setInterval(()=>{
+/* ---------- GAME ---------- */
+function startGame(){
+  document.getElementById("score").textContent = score;
+  showQuestion();
+  timer = setInterval(()=>{
     timeLeft--;
-    let m=Math.floor(timeLeft/60);
-    let s=timeLeft%60;
-    document.getElementById("time").textContent=
-      m+":"+(s<10?"0":"")+s;
-    if(timeLeft<=0){
-      endGame();
-    }
+    document.getElementById("time").textContent =
+      Math.floor(timeLeft/60)+":"+String(timeLeft%60).padStart(2,"0");
+    if(timeLeft<=0) endGame();
   },1000);
 }
 
-/* LOAD QUESTION */
-function loadQuestion(){
-  document.getElementById("qNumber").textContent=
-    "Question "+(index+1);
-  document.getElementById("qText").textContent=
-    questions[index];
+function normalize(x){
+  return x.toLowerCase().replace(/[^a-z0-9]/g,"");
 }
 
-/* SUBMIT */
 function submitAnswer(){
-  let user=document.getElementById("answerInput")
-    .value.trim().toLowerCase();
+  let user = normalize(document.getElementById("answerInput").value);
+  let correct = questions[index].a.some(ans=>normalize(ans)==user);
+  if(correct) score+=5;
+  else score-=2;
+  next();
+}
 
-  if(user===answers[index]){
-    score+=5;
-  }else{
-    score-=2;
-  }
+function skipQuestion(){
+  next();
+}
 
-  document.getElementById("score").textContent=score;
+function next(){
   document.getElementById("answerInput").value="";
   index++;
-
-  if(index<questions.length){
-    loadQuestion();
-  }else{
-    endGame();
-  }
+  if(index>=questions.length) endGame();
+  else showQuestion();
 }
 
-/* END GAME */
+function showQuestion(){
+  document.getElementById("qNumber").textContent = `Question ${index+1}`;
+  document.getElementById("questionText").textContent = questions[index].q;
+  document.getElementById("score").textContent = score;
+  document.getElementById("skipBtn").classList.toggle("hidden", index<6);
+}
+
 function endGame(){
   clearInterval(timer);
-  localStorage.setItem("completedGame","yes");
+  localStorage.setItem("completedGame",true);
   alert("Game Over! Your score: "+score);
 }
 </script>
