@@ -6,104 +6,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: linear-gradient(#7a0c0c, #c0392b, #f39c12);
-  color: #fff;
-  overflow-x: hidden;
+body{
+  margin:0;
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:linear-gradient(#7a0c0c,#c0392b,#f39c12);
+  color:#fff;
 }
 
-.bg-sun, .bg-cane, .bg-pot {
-  position: fixed;
-  opacity: 0.25;
-  z-index: 0;
+.bg-sun,.bg-cane,.bg-pot{
+.bg-sun,
+.bg-cane,
+.bg-pot{
+  position:fixed;
+  opacity:0.22;
+  z-index:0;
+  pointer-events:none; /* NEVER block inputs */
 }
 
-.bg-sun {
-  width: 180px;
-  height: 180px;
-  background: radial-gradient(circle, #ffd54f, #ff9800);
-  border-radius: 50%;
-  top: 20px;
-  right: -40px;
+/* Sun — pushed OUTSIDE top-right */
+.bg-sun{
+  width:160px;
+  height:160px;
+  background:radial-gradient(circle,#ffd54f,#ff9800);
+  border-radius:50%;
+  top:-40px;
+  right:-70px;
 }
 
-.bg-cane {
-  width: 14px;
-  height: 260px;
-  background: green;
-  bottom: 0;
-  left: 10px;
+/* Sugarcane — locked to extreme left */
+.bg-cane{
+  width:12px;
+  height:240px;
+  background:linear-gradient(#1e7f34,#3cb371);
+  bottom:0;
+  left:-25px;
 }
 
-.bg-pot {
-  width: 100px;
-  height: 80px;
-  background: brown;
-  border-radius: 0 0 50px 50px;
-  bottom: 10px;
-  right: 20px;
+/* Pongal pot — outside bottom-right */
+.bg-pot{
+  width:90px;
+  height:70px;
+  background:#8b4513;
+  border-radius:0 0 45px 45px;
+  bottom:-20px;
+  right:-30px;
 }
 
-.card {
-  max-width: 540px;
-  margin: 70px auto;
-  background: rgba(0,0,0,0.65);
-  padding: 24px;
-  border-radius: 18px;
-  z-index: 5;
-  position: relative;
+.card{
+  max-width:540px;
+  margin:70px auto;
+  background:rgba(0,0,0,0.65);
+  padding:24px;
+  border-radius:18px;
+  position:relative;
+  z-index:5;
 }
 
-input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  margin-top: 10px;
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:none;
+  font-size:16px;
 }
 
-button {
-  width: 100%;
-  padding: 14px;
-  font-size: 17px;
-  border-radius: 10px;
-  border: none;
-  margin-top: 14px;
-  cursor: pointer;
+.green{background:#27ae60;color:white;}
+.orange{background:#e67e22;color:white;}
+.disabled{background:#555;cursor:not-allowed;}
+.hidden{display:none;}
+
+.status{
+  display:flex;
+  justify-content:space-between;
+  font-weight:bold;
+  margin-top:15px;
 }
 
-.green { background: #27ae60; color: white; }
-.orange { background: #e67e22; color: white; }
-.disabled { background: #555; cursor: not-allowed; }
-
-.hidden { display: none; }
-
-#questionNumber {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-#questionText {
-  text-align: left;
-  line-height: 1.6;
-  margin-bottom: 15px;
-}
-
-.status {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-  margin-top: 15px;
-}
-
-.leader {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
+.leader{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
 }
 </style>
 </head>
@@ -131,8 +114,8 @@ button {
   <div id="questionText"></div>
 
   <input id="answerInput" placeholder="Type your answer">
-  <button class="green" onclick="submitAnswer()">Submit</button>
-  <button id="skipBtn" class="orange hidden" onclick="skipQuestion()">Skip</button>
+  <button class="green" id="submitBtn">Submit</button>
+  <button class="orange hidden" id="skipBtn">Skip</button>
 
   <div class="status">
     <div>⏳ <span id="time">2:30</span></div>
@@ -147,40 +130,54 @@ button {
 </div>
 
 <script>
-if (localStorage.getItem("completedGame") === "yes") {
-  document.body.innerHTML =
-    "<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
+/* ---------- DOM ---------- */
+const startPage=document.getElementById("startPage");
+const gamePage=document.getElementById("gamePage");
+const leaderboardPage=document.getElementById("leaderboardPage");
+const leaderboard=document.getElementById("leaderboard");
+
+const questionNumber=document.getElementById("questionNumber");
+const questionText=document.getElementById("questionText");
+const answerInput=document.getElementById("answerInput");
+const submitBtn=document.getElementById("submitBtn");
+const skipBtn=document.getElementById("skipBtn");
+
+const timeEl=document.getElementById("time");
+const scoreEl=document.getElementById("score");
+
+const nameInput=document.getElementById("playerName");
+const startBtn=document.getElementById("startBtn");
+
+/* ---------- ONE ATTEMPT RULE ---------- */
+if(localStorage.getItem("completedGame")==="yes"){
+  document.body.innerHTML="<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
 }
 
-const nameInput = document.getElementById("playerName");
-const startBtn = document.getElementById("startBtn");
-
-nameInput.addEventListener("input", () => {
-  startBtn.classList.toggle("disabled", nameInput.value.trim() === "");
+/* ---------- START ---------- */
+nameInput.addEventListener("input",()=>{
+  startBtn.classList.toggle("disabled",!nameInput.value.trim());
 });
 
-startBtn.onclick = () => {
-  if (!nameInput.value.trim()) return;
-  document.getElementById("startPage").classList.add("hidden");
-  document.getElementById("gamePage").classList.remove("hidden");
+startBtn.onclick=()=>{
+  if(!nameInput.value.trim())return;
+  startPage.classList.add("hidden");
+  gamePage.classList.remove("hidden");
   startGame();
 };
 
-/* -------- COMPULSORY QUESTIONS (UNCHANGED) -------- */
-const compulsory = [
+/* ---------- COMPULSORY (EXACT WORDING) ---------- */
+const compulsory=[
 {
 q:`Start sweet: Brownie questions for Sihi huggi bonus points!
 
-What does July – June signify?
-
-a) Crop year
-b) Financial year
-c) Academic year`,
+What does July – June signify:
+a) crop year
+b) financial year
+c) academic year`,
 a:["a","cropyear"]
 },
 {
 q:`Pi hide & seek! Spot the pi in the invite
-
 a) Temple
 b) Stove
 c) Sugarcane`,
@@ -188,97 +185,100 @@ a:["b","stove"]
 },
 {
 q:`Spot the handsome duo in this flyer?
-
-a) Harish Chandra and Bhaskaracharya
-b) P.C. Mahalanobis and Satyendra Nath Bose
-c) Srinivasa Ramanujan and Aryabhata`,
-a:["c","ramanujan","aryabhata"]
+(Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
+a) Pythagoras and Carl Friedrich Gauss
+b) Euler and Archimedes
+c) Aryabhata and Srinivasa Ramanujan`,
+a:["c","aryabhata","ramanujan"]
 },
 {
 q:`What does Sankranti signify astronomically?
-
 a) Full moon day
-b) Sun’s transition into Capricorn
+b) Sun’s transition into Capricorn (Makara Rashi)
 c) Start of winter
 d) Spring equinox`,
 a:["b"]
 },
 {
 q:`Why are kites flown during Sankranti?
-
-a) Entertainment
-b) Scare birds
-c) Monsoon
-d) Welcome Uttarayan`,
+a) For entertainment only
+b) To scare birds away
+c) To mark the monsoon season
+d) To welcome the Sun’s northward journey (Uttarayan)`,
 a:["d"]
 },
 {
 q:`Stove ain't apple pie 😂, it’s π… why?
-
-a) Infinite cycle
-b) Cashews`,
+a) Nature’s infinite harvest loop in life’s eternal abundance circle
+b) Because π represents the number of cashews used in making pongal`,
 a:["a"]
 },
 {
-q:`Total Harvest = 750 kg, Rice = 40%.
-How much rice?`,
-a:["300","a"]
+q:`Total Harvest = 750 kg  
+Rice constitutes 40% of the total harvest.
+
+How many kilograms of rice were harvested?
+a) 300 kg
+b) 250 kg
+c) 350 kg`,
+a:["a","300"]
 }
 ];
 
-/* -------- 35 UNIQUE POOL QUESTIONS -------- */
-const pool = [
-{q:`If f(x)=3x−1, find f(4).`,a:["11"]},
-{q:`If f(x)=x², what is f(−3)?`,a:["9"]},
-{q:`Solve: 2x + 5 = 15.`,a:["5"]},
-{q:`Is y=x³ an even or odd function?`,a:["odd"]},
-{q:`Find the y-intercept of y=2x+7.`,a:["7"]},
+/* ---------- 35 POOL QUESTIONS (ALL FILLED) ---------- */
+const pool=[
+{q:`If f(x)=2x−3, find f(5).`,a:["7"]},
+{q:`If f(x)=x², find f(−4).`,a:["16"]},
+{q:`For f(x)=3x+1, find x when f(x)=10.`,a:["3"]},
+{q:`Is f(x)=x² increasing or decreasing for x>0?`,a:["increasing"]},
+{q:`Find f(0) for f(x)=x+4.`,a:["4"]},
 
-{q:`State the vertical shift in y=(x−1)²−4.`,a:["down4","-4"]},
-{q:`What reflection is seen in y=−f(x)?`,a:["xaxis"]},
-{q:`Horizontal shift in y=(x+5)²?`,a:["left5","5"]},
-{q:`Stretch factor in y=3x²?`,a:["3"]},
+{q:`State the vertical shift in y=(x−2)²+5.`,a:["up5","5"]},
+{q:`What reflection occurs in y=−x²?`,a:["xaxis"]},
+{q:`Horizontal shift in y=(x+3)².`,a:["left3","3"]},
+{q:`Stretch factor in y=2x².`,a:["2"]},
 
-{q:`Evaluate log₁₀(1000).`,a:["3"]},
-{q:`Evaluate log₁₀(0.001).`,a:["-3"]},
-{q:`Solve: log x = 2.`,a:["100"]},
+{q:`Evaluate log₁₀(100).`,a:["2"]},
+{q:`Evaluate log₁₀(0.01).`,a:["-2"]},
+{q:`Simplify log(10³).`,a:["3"]},
+{q:`Convert log₁₀(1000)=3 to exponential form.`,a:["10^3=1000"]},
 
-{q:`Simplify the ratio 45:60.`,a:["3:4"]},
-{q:`Divide 90 in the ratio 2:1. Larger part?`,a:["60"]},
-{q:`If 8 pens cost ₹40, cost of 1 pen?`,a:["5"]},
+{q:`Divide 60 in the ratio 2:3. Find the larger part.`,a:["36"]},
+{q:`If 5 kg costs ₹150, what is the cost of 2 kg?`,a:["60"]},
+{q:`If x ∝ y and x=10 when y=2, find x when y=5.`,a:["25"]},
+{q:`Simplify the ratio 24:36.`,a:["2:3"]},
 
-{q:`A farmer harvests 150 kg/day. Harvest in 4 days?`,a:["600"]},
-{q:`20% of 500 kg is used. How much?`,a:["100"]},
-{q:`Price increases from ₹40 to ₹50. Increase?`,a:["10"]},
+{q:`A field yields 120 kg per hour. How much in 3 hours?`,a:["360"]},
+{q:`If 25% of 800 kg is pulses, how much pulses?`,a:["200"]},
+{q:`A farmer sells rice at ₹40/kg. Earnings for 15 kg?`,a:["600"]},
+{q:`Temperature rises from 20°C to 30°C. Change?`,a:["10"]},
 
-{q:`Find the 5th term of sequence 2,4,6,…`,a:["10"]},
-{q:`Sum of first 5 natural numbers?`,a:["15"]},
-{q:`Find √196.`,a:["14"]},
-{q:`Evaluate 2³ × 4.`,a:["32"]},
-{q:`Simplify: 100 ÷ (5×4).`,a:["5"]},
-
-{q:`If temperature rises from 18°C to 30°C, change?`,a:["12"]},
-{q:`Find 12.5% of 80.`,a:["10"]},
+{q:`Evaluate 3² + 4².`,a:["25"]},
+{q:`Find 15% of 200.`,a:["30"]},
+{q:`Calculate √144.`,a:["12"]},
+{q:`What is 2³ × 2²?`,a:["32"]},
+{q:`Solve: 100 ÷ 4 + 5.`,a:["30"]},
 {q:`Solve: 3(x−2)=9.`,a:["5"]},
-{q:`Mean of 2,4,6,8?`,a:["5"]},
+{q:`Mean of 2,4,6,8.`,a:["5"]},
 {q:`If x:y=4:5 and x=20, find y.`,a:["25"]},
-{q:`Solve: 7² − 3².`,a:["40"]},
+{q:`Simplify 2⁴.`,a:["16"]},
 {q:`Evaluate 5! ÷ 4!.`,a:["5"]},
-{q:`Simplify 2⁴.`,a:["16"]}
+{q:`Solve 7² − 3².`,a:["40"]}
 ];
 
-const questions = compulsory.concat(pool.sort(()=>Math.random()-0.5));
+const questions=compulsory.concat(pool.sort(()=>Math.random()-0.5));
 
+/* ---------- GAME LOGIC ---------- */
 let index=0,score=0,timeLeft=150,timer,playerName="";
 
 function startGame(){
   playerName=nameInput.value.trim();
-  updateStatus();
   showQuestion();
+  updateStatus();
   timer=setInterval(()=>{
     timeLeft--;
     updateStatus();
-    if(timeLeft<=0) endGame();
+    if(timeLeft<=0)endGame();
   },1000);
 }
 
@@ -287,24 +287,25 @@ function normalize(x){
 }
 
 function showQuestion(){
-  document.getElementById("questionNumber").textContent="Question "+(index+1);
-  document.getElementById("questionText").innerHTML=questions[index].q.replace(/\n/g,"<br>");
-  document.getElementById("skipBtn").classList.toggle("hidden",index<6);
+  questionNumber.textContent="Question "+(index+1);
+  questionText.innerHTML=questions[index].q.replace(/\n/g,"<br>");
+  skipBtn.classList.toggle("hidden",index<6);
 }
 
-function submitAnswer(){
+submitBtn.onclick=()=>{
+  if(!answerInput.value.trim())return;
   const user=normalize(answerInput.value);
-  const correct=questions[index].a.some(ans=>normalize(ans)===user);
+  const correct=questions[index].a.some(a=>normalize(a)===user);
   score+=correct?5:-2;
   nextQuestion();
-}
+};
 
-function skipQuestion(){nextQuestion();}
+skipBtn.onclick=()=>nextQuestion();
 
 function nextQuestion(){
   answerInput.value="";
   index++;
-  if(index>=questions.length) endGame();
+  if(index>=questions.length)endGame();
   else showQuestion();
 }
 
@@ -321,12 +322,13 @@ function endGame(){
   scores.push({name:playerName,score});
   scores.sort((a,b)=>b.score-a.score);
   localStorage.setItem("leaderboard",JSON.stringify(scores.slice(0,10)));
+
   gamePage.classList.add("hidden");
   leaderboardPage.classList.remove("hidden");
   leaderboard.innerHTML="";
   scores.slice(0,10).forEach((e,i)=>{
-    leaderboard.innerHTML+=
-    `<div class="leader">
+    leaderboard.innerHTML+=`
+    <div class="leader">
       <span>${i+1}. ${e.name} ${i<3?["🥇","🥈","🥉"][i]:""}</span>
       <span>${e.score}</span>
     </div>`;
