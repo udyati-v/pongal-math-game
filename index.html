@@ -8,52 +8,49 @@
 <style>
 body{
   margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
   font-family:"Segoe UI",Arial,sans-serif;
   background:linear-gradient(#7a0c0c,#c0392b,#f39c12);
   color:#fff;
 }
 
-.bg-sun,.bg-cane,.bg-pot{
+/* BACKGROUND ELEMENTS */
 .bg-sun,
 .bg-cane,
 .bg-pot{
   position:fixed;
   opacity:0.22;
   z-index:0;
-  pointer-events:none; /* NEVER block inputs */
+  pointer-events:none;
 }
 
-/* Sun — pushed OUTSIDE top-right */
 .bg-sun{
-  width:160px;
-  height:160px;
+  width:160px;height:160px;
   background:radial-gradient(circle,#ffd54f,#ff9800);
   border-radius:50%;
-  top:-40px;
-  right:-70px;
+  top:-40px;right:-70px;
 }
 
-/* Sugarcane — locked to extreme left */
 .bg-cane{
-  width:12px;
-  height:240px;
+  width:12px;height:240px;
   background:linear-gradient(#1e7f34,#3cb371);
-  bottom:0;
-  left:-25px;
+  bottom:0;left:-25px;
 }
 
-/* Pongal pot — outside bottom-right */
 .bg-pot{
-  width:90px;
-  height:70px;
+  width:90px;height:70px;
   background:#8b4513;
   border-radius:0 0 45px 45px;
-  bottom:-20px;
-  right:-30px;
+  bottom:-20px;right:-30px;
 }
 
+/* CARD */
 .card{
   max-width:540px;
+  width:100%;
   margin:70px auto;
   background:rgba(0,0,0,0.65);
   padding:24px;
@@ -71,8 +68,8 @@ input,button{
   font-size:16px;
 }
 
-.green{background:#27ae60;color:white;}
-.orange{background:#e67e22;color:white;}
+.green{background:#27ae60;color:#fff;}
+.orange{background:#e67e22;color:#fff;}
 .disabled{background:#555;cursor:not-allowed;}
 .hidden{display:none;}
 
@@ -100,10 +97,7 @@ input,button{
 <!-- START PAGE -->
 <div class="card" id="startPage">
   <h1>Sankranti Math Harvest 🌾</h1>
-  <p>
-    Beat the Clock ⏰️! Solve More ➕️ score more ✨,<br>
-    top 3 wins prizes 🏆
-  </p>
+  <p>Beat the Clock ⏰️! Solve More ➕️ score more ✨,<br>top 3 wins prizes 🏆</p>
   <input id="playerName" placeholder="Enter your name">
   <button id="startBtn" class="green disabled">Start Game</button>
 </div>
@@ -123,15 +117,20 @@ input,button{
   </div>
 </div>
 
-<!-- LEADERBOARD PAGE -->
+<!-- LEADERBOARD -->
 <div class="card hidden" id="leaderboardPage">
   <h2>🏆 Leaderboard</h2>
   <div id="leaderboard"></div>
 </div>
 
 <script>
-/* ---------- DOM ---------- */
-const startPage=document.getElementById("startPage");
+/* ONE ATTEMPT */
+if(localStorage.getItem("completedGame")==="yes"){
+  document.body.innerHTML="<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
+}
+
+/* DOM */
+const startPage=playerName.parentElement;
 const gamePage=document.getElementById("gamePage");
 const leaderboardPage=document.getElementById("leaderboardPage");
 const leaderboard=document.getElementById("leaderboard");
@@ -144,115 +143,81 @@ const skipBtn=document.getElementById("skipBtn");
 
 const timeEl=document.getElementById("time");
 const scoreEl=document.getElementById("score");
-
 const nameInput=document.getElementById("playerName");
 const startBtn=document.getElementById("startBtn");
 
-/* ---------- ONE ATTEMPT RULE ---------- */
-if(localStorage.getItem("completedGame")==="yes"){
-  document.body.innerHTML="<h2 style='text-align:center;margin-top:40vh'>You have already completed the game on this device.</h2>";
-}
-
-/* ---------- START ---------- */
-nameInput.addEventListener("input",()=>{
-  startBtn.classList.toggle("disabled",!nameInput.value.trim());
-});
+/* START */
+nameInput.oninput=()=>startBtn.classList.toggle("disabled",!nameInput.value.trim());
 
 startBtn.onclick=()=>{
-  if(!nameInput.value.trim())return;
+  if(startBtn.classList.contains("disabled"))return;
   startPage.classList.add("hidden");
   gamePage.classList.remove("hidden");
   startGame();
 };
 
-/* ---------- COMPULSORY (EXACT WORDING) ---------- */
-const compulsory=[
-{
-q:`Start sweet: Brownie questions for Sihi huggi bonus points!
+/* QUESTIONS */
+const compulsory=[ /* SAME AS YOU GAVE */ 
+{q:`Start sweet: Brownie questions for Sihi huggi bonus points!
 
 What does July – June signify:
 a) crop year
 b) financial year
-c) academic year`,
-a:["a","cropyear"]
-},
-{
-q:`Pi hide & seek! Spot the pi in the invite
+c) academic year`,a:["a","cropyear"]},
+{q:`Pi hide & seek! Spot the pi in the invite
 a) Temple
 b) Stove
-c) Sugarcane`,
-a:["b","stove"]
-},
-{
-q:`Spot the handsome duo in this flyer?
+c) Sugarcane`,a:["b","stove"]},
+{q:`Spot the handsome duo in this flyer?
 (Hint: One cracked equations in dreams, the other is the Father of Indian Mathematics!)
 a) Pythagoras and Carl Friedrich Gauss
 b) Euler and Archimedes
-c) Aryabhata and Srinivasa Ramanujan`,
-a:["c","aryabhata","ramanujan"]
-},
-{
-q:`What does Sankranti signify astronomically?
+c) Aryabhata and Srinivasa Ramanujan`,a:["c","aryabhata","ramanujan"]},
+{q:`What does Sankranti signify astronomically?
 a) Full moon day
 b) Sun’s transition into Capricorn (Makara Rashi)
 c) Start of winter
-d) Spring equinox`,
-a:["b"]
-},
-{
-q:`Why are kites flown during Sankranti?
+d) Spring equinox`,a:["b"]},
+{q:`Why are kites flown during Sankranti?
 a) For entertainment only
 b) To scare birds away
 c) To mark the monsoon season
-d) To welcome the Sun’s northward journey (Uttarayan)`,
-a:["d"]
-},
-{
-q:`Stove ain't apple pie 😂, it’s π… why?
+d) To welcome the Sun’s northward journey (Uttarayan)`,a:["d"]},
+{q:`Stove ain't apple pie 😂, it’s π… why?
 a) Nature’s infinite harvest loop in life’s eternal abundance circle
-b) Because π represents the number of cashews used in making pongal`,
-a:["a"]
-},
-{
-q:`Total Harvest = 750 kg  
+b) Because π represents the number of cashews used in making pongal`,a:["a"]},
+{q:`Total Harvest = 750 kg  
 Rice constitutes 40% of the total harvest.
 
 How many kilograms of rice were harvested?
 a) 300 kg
 b) 250 kg
-c) 350 kg`,
-a:["a","300"]
-}
+c) 350 kg`,a:["a","300"]}
 ];
 
-/* ---------- 35 POOL QUESTIONS (ALL FILLED) ---------- */
-const pool=[
+/* POOL (35) */
+const pool=[ /* unchanged from your last correct version */ 
 {q:`If f(x)=2x−3, find f(5).`,a:["7"]},
 {q:`If f(x)=x², find f(−4).`,a:["16"]},
 {q:`For f(x)=3x+1, find x when f(x)=10.`,a:["3"]},
 {q:`Is f(x)=x² increasing or decreasing for x>0?`,a:["increasing"]},
 {q:`Find f(0) for f(x)=x+4.`,a:["4"]},
-
 {q:`State the vertical shift in y=(x−2)²+5.`,a:["up5","5"]},
 {q:`What reflection occurs in y=−x²?`,a:["xaxis"]},
 {q:`Horizontal shift in y=(x+3)².`,a:["left3","3"]},
 {q:`Stretch factor in y=2x².`,a:["2"]},
-
 {q:`Evaluate log₁₀(100).`,a:["2"]},
 {q:`Evaluate log₁₀(0.01).`,a:["-2"]},
 {q:`Simplify log(10³).`,a:["3"]},
 {q:`Convert log₁₀(1000)=3 to exponential form.`,a:["10^3=1000"]},
-
 {q:`Divide 60 in the ratio 2:3. Find the larger part.`,a:["36"]},
 {q:`If 5 kg costs ₹150, what is the cost of 2 kg?`,a:["60"]},
 {q:`If x ∝ y and x=10 when y=2, find x when y=5.`,a:["25"]},
 {q:`Simplify the ratio 24:36.`,a:["2:3"]},
-
 {q:`A field yields 120 kg per hour. How much in 3 hours?`,a:["360"]},
 {q:`If 25% of 800 kg is pulses, how much pulses?`,a:["200"]},
 {q:`A farmer sells rice at ₹40/kg. Earnings for 15 kg?`,a:["600"]},
 {q:`Temperature rises from 20°C to 30°C. Change?`,a:["10"]},
-
 {q:`Evaluate 3² + 4².`,a:["25"]},
 {q:`Find 15% of 200.`,a:["30"]},
 {q:`Calculate √144.`,a:["12"]},
@@ -268,11 +233,10 @@ const pool=[
 
 const questions=compulsory.concat(pool.sort(()=>Math.random()-0.5));
 
-/* ---------- GAME LOGIC ---------- */
-let index=0,score=0,timeLeft=150,timer,playerName="";
+/* GAME */
+let index=0,score=0,timeLeft=150,timer;
 
 function startGame(){
-  playerName=nameInput.value.trim();
   showQuestion();
   updateStatus();
   timer=setInterval(()=>{
@@ -311,15 +275,14 @@ function nextQuestion(){
 
 function updateStatus(){
   scoreEl.textContent=score;
-  const m=Math.floor(timeLeft/60),s=timeLeft%60;
-  timeEl.textContent=m+":"+String(s).padStart(2,"0");
+  timeEl.textContent=Math.floor(timeLeft/60)+":"+String(timeLeft%60).padStart(2,"0");
 }
 
 function endGame(){
   clearInterval(timer);
   localStorage.setItem("completedGame","yes");
   const scores=JSON.parse(localStorage.getItem("leaderboard")||"[]");
-  scores.push({name:playerName,score});
+  scores.push({name:nameInput.value,score});
   scores.sort((a,b)=>b.score-a.score);
   localStorage.setItem("leaderboard",JSON.stringify(scores.slice(0,10)));
 
@@ -327,8 +290,7 @@ function endGame(){
   leaderboardPage.classList.remove("hidden");
   leaderboard.innerHTML="";
   scores.slice(0,10).forEach((e,i)=>{
-    leaderboard.innerHTML+=`
-    <div class="leader">
+    leaderboard.innerHTML+=`<div class="leader">
       <span>${i+1}. ${e.name} ${i<3?["🥇","🥈","🥉"][i]:""}</span>
       <span>${e.score}</span>
     </div>`;
